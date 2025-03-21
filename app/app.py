@@ -3,7 +3,7 @@ from functions import get_query_as_df, QUERY_PATH
 
 with open(QUERY_PATH) as txtfile:
     file = txtfile.read()
-queries = [r.strip() for r in file.split(';') if r.strip()]
+queries = [r.strip() for r in file.split(";") if r.strip()]
 
 app_ui = ui.page_navbar(
     ui.nav_panel(
@@ -29,7 +29,10 @@ app_ui = ui.page_navbar(
                 ui.input_select(
                     "choix_stat",
                     "Choisir une statistique",
-                    {"Benyamé-Tchebichev": "Benyamé-Tchebichev", "Fubini-Tonneli": "Fubini-Tonneli"},
+                    {
+                        "Benyamé-Tchebichev": "Benyamé-Tchebichev",
+                        "Fubini-Tonneli": "Fubini-Tonneli",
+                    },
                 ),
                 open="closed",
             ),
@@ -71,7 +74,7 @@ def server(input, output, session):
     @output
     @render.text
     def texte_param():
-        return f"Sucer Justin : {'Oui' if input.activation() else 'Non'}"
+        return "Faire un câlin à Justin : " f"{'Oui' if input.activation() else 'Non'}"
 
 
 app = App(app_ui, server)

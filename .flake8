@@ -1,0 +1,5 @@
+[flake8]
+exclude =
+    __pycache__
+    projet_trait/
+max-line-length = 88

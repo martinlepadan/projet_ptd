@@ -2,8 +2,8 @@ import sqlite3
 import os
 import pandas as pd
 
-DB_PATH = os.path.join(os.getcwd(), 'formule_1.db')
-QUERY_PATH = os.path.join(os.getcwd(), 'app', 'queries.txt')
+DB_PATH = os.path.join(os.getcwd(), "formule_1.db")
+QUERY_PATH = os.path.join(os.getcwd(), "app", "queries.txt")
 
 
 def get_query_as_df(query, params):
