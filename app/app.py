@@ -1,5 +1,9 @@
-from shiny import App, ui, render
+from shiny import App, ui, reactive, render
+from functions import get_query_as_df, QUERY_PATH
 
+with open(QUERY_PATH) as txtfile:
+    file = txtfile.read()
+queries = [r.strip() for r in file.split(';') if r.strip()]
 
 app_ui = ui.page_navbar(
     ui.nav_panel(
@@ -8,15 +12,14 @@ app_ui = ui.page_navbar(
             ui.sidebar(
                 ui.input_slider(
                     "slider_accueil",
-                    "Taille Beuteu Justin (en m)",
+                    "Nombre de victoire minimales",
                     min=0,
                     max=100,
-                    value=50,
+                    value=0,
                 ),
                 open="closed",
             ),
-            ui.h2("Bienvenue sur la page d'accueil"),
-            ui.output_text("texte_accueil"),
+            ui.output_table("victoires_par_pilote"),
         ),
     ),
     ui.nav_panel(
@@ -50,10 +53,15 @@ app_ui = ui.page_navbar(
 
 
 def server(input, output, session):
-    @output
-    @render.text
-    def texte_accueil():
-        return f"Valeur selectionnée : {input.slider_accueil()}"
+
+    @reactive.Calc
+    def dataframe():
+        return get_query_as_df(queries[0], int(input.slider_accueil()))
+
+    @output()
+    @render.table
+    def victoires_par_pilote():
+        return dataframe()
 
     @output
     @render.text

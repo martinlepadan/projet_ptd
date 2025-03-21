@@ -1,6 +1,4 @@
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE circuits (
+CREATE TABLE IF NOT EXISTS circuits (
     circuitId INT PRIMARY KEY,
     circuitRef VARCHAR(100),
     name VARCHAR(100),
@@ -12,7 +10,7 @@ CREATE TABLE circuits (
     url VARCHAR(100)
 );
 
-CREATE TABLE constructors (
+CREATE TABLE IF NOT EXISTS constructors (
     constructorId INT PRIMARY KEY,
     constructorRef VARCHAR(50),
     name VARCHAR(50),
@@ -20,7 +18,7 @@ CREATE TABLE constructors (
     url VARCHAR(100)
 );
 
-CREATE TABLE drivers (
+CREATE TABLE IF NOT EXISTS drivers (
     driverId INT PRIMARY KEY,
     driverRef VARCHAR(20),
     number INT,
@@ -32,7 +30,17 @@ CREATE TABLE drivers (
     url VARCHAR(100)
 );
 
-CREATE TABLE races (
+CREATE TABLE IF NOT EXISTS seasons (
+    year INT PRIMARY KEY,
+    url VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS status (
+    statusId INT PRIMARY KEY,
+    status VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS races (
     raceId INT PRIMARY KEY,
     year INT,
     round INT,
@@ -54,12 +62,7 @@ CREATE TABLE races (
     FOREIGN KEY (circuitId) REFERENCES circuits(circuitId)
 );
 
-CREATE TABLE seasons (
-    year INT PRIMARY KEY,
-    url VARCHAR(100)
-);
-
-CREATE TABLE constructor_results (
+CREATE TABLE IF NOT EXISTS constructor_results (
     constructorResultsId INT PRIMARY KEY,
     raceId INT,
     constructorId INT,
@@ -69,7 +72,7 @@ CREATE TABLE constructor_results (
     FOREIGN KEY (constructorId) REFERENCES constructors(constructorId)
 );
 
-CREATE TABLE constructor_status (
+CREATE TABLE IF NOT EXISTS constructor_standings (
     constructorStandingsId INT PRIMARY KEY,
     raceId INT,
     constructorId INT,
@@ -81,7 +84,7 @@ CREATE TABLE constructor_status (
     FOREIGN KEY (constructorId) REFERENCES constructors(constructorId)
 );
 
-CREATE TABLE driver_standings (
+CREATE TABLE IF NOT EXISTS driver_standings (
     driverStandingsId INT PRIMARY KEY,
     raceId INT,
     driverId INT,
@@ -93,7 +96,7 @@ CREATE TABLE driver_standings (
     FOREIGN KEY (driverId) REFERENCES drivers(driverId)
 );
 
-CREATE TABLE lap_times (
+CREATE TABLE IF NOT EXISTS lap_times (
     raceId INT,
     driverId INT,
     lap INT,
@@ -105,7 +108,7 @@ CREATE TABLE lap_times (
     FOREIGN KEY (driverId) REFERENCES drivers(driverId)
 );
 
-CREATE TABLE pit_stops (
+CREATE TABLE IF NOT EXISTS pit_stops (
     raceId INT,
     driverId INT,
     stop INT,
@@ -118,7 +121,7 @@ CREATE TABLE pit_stops (
     FOREIGN KEY (driverId) REFERENCES drivers(driverId)
 );
 
-CREATE TABLE qualifying (
+CREATE TABLE IF NOT EXISTS qualifying (
     qualifyId INT PRIMARY KEY,
     raceId INT,
     driverId INT,
@@ -133,7 +136,7 @@ CREATE TABLE qualifying (
     FOREIGN KEY (constructorId) REFERENCES constructors(constructorId)
 );
 
-CREATE TABLE results (
+CREATE TABLE IF NOT EXISTS results (
     resultId INT PRIMARY KEY,
     raceId INT,
     driverId INT,
@@ -157,7 +160,7 @@ CREATE TABLE results (
     FOREIGN KEY (constructorId) REFERENCES constructors(constructorId)
 );
 
-CREATE TABLE sprint_results (
+CREATE TABLE IF NOT EXISTS sprint_results (
     resultId INT PRIMARY KEY,
     raceId INT,
     driverId INT,
@@ -178,9 +181,4 @@ CREATE TABLE sprint_results (
     FOREIGN KEY (driverId) REFERENCES drivers(driverId),
     FOREIGN KEY (constructorId) REFERENCES constructors(constructorId),
     FOREIGN KEY (statusId) REFERENCES status(statusId)
-);
-
-CREATE TABLE status (
-    statusId INT PRIMARY KEY,
-    status VARCHAR(50)
 );
