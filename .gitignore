@@ -1,0 +1,8 @@
+projet_trait/
+*.csv
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.tmp
