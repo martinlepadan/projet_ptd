@@ -59,7 +59,7 @@ def server(input, output, session):
 
     @reactive.Calc
     def dataframe():
-        return get_query_as_df(queries[0], int(input.slider_accueil()))
+        return get_query_as_df(queries[0], [int(input.slider_accueil())])
 
     @output()
     @render.table
