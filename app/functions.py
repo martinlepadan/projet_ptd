@@ -1,4 +1,4 @@
-"""Fichier contenant des fonctions transversales (je fais genre je connais des mots). """
+"""Fichier contenant des fonctions transversales (je fais genre je connais des mots)."""
 
 import sqlite3
 import os

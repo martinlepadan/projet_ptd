@@ -1,3 +1,4 @@
+"""Fichier permettant de créer une base de données SQLite. """
 import sqlite3
 import os
 import pandas as pd

@@ -1,3 +1,4 @@
+"""Fichier avec l'application Shiny. """
 from shiny import App, ui, reactive, render
 from functions import get_query_as_df, QUERY_PATH
 
