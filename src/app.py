@@ -1,6 +1,7 @@
-"""Fichier avec l'application Shiny. """
+"""Fichier avec l'application Shiny."""
+
 from shiny import App, ui, reactive, render
-from functions import get_query_as_df, QUERY_PATH
+from src.utils import get_query_as_df, QUERY_PATH
 
 with open(QUERY_PATH) as txtfile:
     file = txtfile.read()
