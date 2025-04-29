@@ -1,6 +1,6 @@
 """Fichier avec les différentes requêtes."""
 
-from Analysis.utils import get_pd_df, get_python_df
+from utils import get_pd_df, get_python_df
 import pandas as pd
 
 
