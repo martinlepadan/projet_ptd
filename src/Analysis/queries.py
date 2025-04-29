@@ -133,10 +133,10 @@ classement_saison('pandas', 2023)
 ########### Classement des écuries par année (avec nombre de points) :
 
 def ecuriesPoints(method: str, saison = int(input("Choisir l'année de la saison : "))) -> pd.DataFrame:
-    
+
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
-    
+
     # Barème de points FIA (valable pour la plupart des saisons modernes)
     points_bareme = {
         1: 25,
@@ -150,29 +150,29 @@ def ecuriesPoints(method: str, saison = int(input("Choisir l'année de la saison
         9: 2,
         10: 1
     }
-    
+
     # Requête SQL :
     query = "SELECT * FROM results INNER JOIN races USING(raceId) \
             LEFT JOIN constructors USING(constructorId) ;"
-    
+
     if method == 'pandas':
-        
+
         # On exécute la requête SQL pour créer le dataframe
-        df = get_query_as_df(query)
-        
+        df = get_pd_df(query)
+
         # On trie selon l'année
         df = df.loc[df["year"] == saison]
-        
+
         # On crée une colonne points en attribuant les bons points
         df["points"] = df["positionOrder"].apply(lambda pos: points_bareme.get(pos, 0))
-        
+
         # On regroupe les points par écurie
         classement = df.groupby("constructorRef")["points"].sum().sort_values(ascending=False).reset_index()
 
         # On affiche le classement final
         print(f"\nClassement des écuries pour la saison {saison} :")
         print(classement)
-        
+
 #ecuriesPoints('pandas')
 
 
@@ -181,21 +181,21 @@ def ecuriesPoints(method: str, saison = int(input("Choisir l'année de la saison
 ########### Nombre de victoires par écuries :
 
 def victoiresEcuries(method: str) -> pd.DataFrame:
-    
+
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
-    
+
     # Requête SQL
     query = "SELECT * FROM results INNER JOIN races USING(raceId) \
             LEFT JOIN constructors USING(constructorId) ;"
-            
+
     if method == 'pandas':
-        
+
         # On exécute la requête SQL pour créer le dataframe
         df = get_query_as_df(query)
-        
-        
-        
+
+
+
 #victoiresEcuries('pandas')
 
 
@@ -256,9 +256,9 @@ def victoiresEcuries(method: str) -> pd.DataFrame:
 
 
 
-    
 
-        
+
+
 
 
 
