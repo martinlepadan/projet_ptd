@@ -1,0 +1,6 @@
+create_database/
+projet_trait/
+.vscode/
+__pycache__/
+.coverage
+formule_1.db

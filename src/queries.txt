@@ -1,8 +1,0 @@
-SELECT
-    UPPER(d.surname) || ' ' || d.forename as Pilote,
-    SUM(CASE WHEN ds.position = "1" THEN 1 ELSE 0 END) as Nombre_victoire
-    FROM drivers as d
-        INNER JOIN driver_standings as ds USING(driverId)
-    GROUP BY Pilote
-    HAVING Nombre_Victoire >= ?
-;
