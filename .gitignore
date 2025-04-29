@@ -1,9 +1,6 @@
+create_database/
 projet_trait/
-*.csv
 .vscode/
 __pycache__/
-*.pyc
-*.pyo
-*.log
-*.tmp
-.gitignore
+.coverage
+formule_1.db
