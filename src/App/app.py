@@ -1,4 +1,5 @@
 """Application Dash"""
+
 import sys
 import os
 import dash
