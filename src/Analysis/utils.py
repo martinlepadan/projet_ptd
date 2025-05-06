@@ -172,16 +172,16 @@ def get_python_df(dfs: list, keys: str | list) -> dict[str, list]:
     if not all(isinstance(key, str) for key in keys):
         raise TypeError("Les clés doivent être des chaînes de caractère")
 
-    if isinstance(keys, list) and len(dfs) != len(keys) - 1:
+    if isinstance(keys, list) and len(dfs) != len(keys) + 1:
         raise ValueError("Nombre de clés invalides")
 
     if isinstance(keys, str) and len(dfs) > 2:
         raise ValueError("Nombre de clés invalides")
 
-    rows = [csv_to_rows(df) for df in dfs]
+    rows = [csv_to_rows(df)[1] for df in dfs]
 
     row_merged = reduce(
-        lambda left, right_key: inner_join(left, right_key[0], on=right_key[1]),
+        lambda left, right_key: inner_join(left, right_key[0], right_key[1]),
         zip(rows[1:], keys),
         rows[0],
     )

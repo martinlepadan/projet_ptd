@@ -1,179 +1,95 @@
-"""Application Dash"""
-import sys
-import os
-import dash
-from dash import dcc, html, Input, Output, State, dash_table
-import dash_bootstrap_components as dbc
+import streamlit as st
+from src.Analysis.router import get_question, get_graph
 
+st.set_page_config(page_title="F1 Analysis App", layout="wide")
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.title = "REDBULL PROJECT"
+st.title("🏎️ REDBULL PROJECT - Analyse des données F1")
 
-app.layout = dbc.Container(
-    [
-        dcc.Tabs(
-            [
-                dcc.Tab(
-                    label="Analyse des données",
-                    children=[
-                        html.Div(
-                            className="control-panel",
-                            children=[
-                                dbc.Row(
-                                    [
-                                        dbc.Col(
-                                            [
-                                                html.H4("Paramètres de la requête"),
-                                                dcc.Dropdown(
-                                                    id="question-selector",
-                                                    options=[
-                                                        {
-                                                            "label": "Points par écurie/"
-                                                            "saison",
-                                                            "value": "q1",
-                                                        },
-                                                        {
-                                                            "label": "Performances par "
-                                                            "pilote",
-                                                            "value": "q2",
-                                                        },
-                                                        {
-                                                            "label": "Évolution des "
-                                                            "performances",
-                                                            "value": "q3",
-                                                        },
-                                                    ],
-                                                    value="q1",
-                                                ),
-                                                html.Br(),
-                                                dcc.Dropdown(
-                                                    id="method-selector",
-                                                    options=[
-                                                        {
-                                                            "label": "Pandas",
-                                                            "value": "homemade",
-                                                        },
-                                                        {
-                                                            "label": "Python Pur",
-                                                            "value": "homemade",
-                                                        },
-                                                    ],
-                                                    value="pandas",
-                                                ),
-                                                html.Br(),
-                                                html.Div(id="dynamic-parameters"),
-                                                html.Br(),
-                                                dbc.Button(
-                                                    "Exécuter la requête",
-                                                    id="run-query",
-                                                    color="primary",
-                                                ),
-                                            ],
-                                            md=3,
-                                        ),
-                                        dbc.Col(
-                                            [
-                                                html.H4("Résultats"),
-                                                dcc.Loading(
-                                                    id="loading-results",
-                                                    type="default",
-                                                    children=[
-                                                        html.Div(id="results-table"),
-                                                        dcc.Graph(id="results-plot"),
-                                                    ],
-                                                ),
-                                            ],
-                                            md=9,
-                                        ),
-                                    ]
-                                )
-                            ],
-                        )
-                    ],
-                ),
-                # REGRESSION
-                dcc.Tab(
-                    label="Modèle de Régression",
-                    children=[
-                        html.Div(
-                            [
-                                html.H3("Analyse par régression linéaire"),
-                            ]
-                        )
-                    ],
-                ),
-                # NN
-                dcc.Tab(
-                    label="Réseau de Neurones",
-                    children=[
-                        html.Div(
-                            [
-                                html.H3("Prédictions par réseau de neurones"),
-                            ]
-                        )
-                    ],
-                ),
-            ]
-        )
-    ],
-    fluid=True,
-)
+# Tabs principaux
+tabs = st.tabs(["Requêtes", "Régression", "Réseau de Neurones"])
 
+# ========== ONGLET 1 : REQUÊTES ==========
+with tabs[0]:
+    st.header("Analyse par thématique")
 
-@app.callback(
-    Output("dynamic-parameters", "children"), Input("question-selector", "value")
-)
-def update_parameters(selected_question):
-    """Adapte les paramètres dynamiques selon la question sélectionnée"""
-    if selected_question == "q1":
-        return [
-            dcc.Slider(
-                id="season-slider",
-                min=1950,
-                max=2023,
-                value=2023,
-                marks={str(year): str(year) for year in range(1950, 2025, 5)},
+    THEMES = {
+        "Pilotes": {
+            "q1": "Nombre de victoires par pilote",
+            "q2": "Classement des pilotes pour une saison",
+            "q3": "Temps de carrière des pilotes",
+        },
+        "Écuries": {"q4": "Classement des écuries par année"},
+        "Pit-Stops": {"q5": "Temps moyen de pit-stop par écurie"},
+        "Circuits": {"q6": "Performances par type de circuit"},
+    }
+
+    emojis = {
+        "Pilotes": "🏁",
+        "Écuries": "🏎️",
+        "Pit-Stops": "🛠️",
+        "Circuits": "🛤️",
+    }
+
+    for theme, questions in THEMES.items():
+        emoji = emojis.get(theme, "📂")
+        with st.expander(f"{emoji} {theme}", expanded=False):
+            question_label = st.selectbox(
+                f"Question ({theme})",
+                options=list(questions.keys()),
+                format_func=lambda k: questions[k],
+                key=f"{theme}-question",
             )
-        ]
-    elif selected_question == "q2":
-        return [
-            dcc.Dropdown(
-                id="driver-selector",
-                options=[],
-                multi=True,
-            )
-        ]
+            query_func = get_question(question_label)
+            plot_func = get_graph(question_label)
 
+            # Sélecteurs selon la question
+            method = None
+            if question_label in ["q1", "q4", "q5", "q6"]:
+                method = st.selectbox(
+                    "Méthode",
+                    options=["pandas", "homemade"],
+                    key=f"{question_label}-method",
+                )
 
-@app.callback(
-    [Output("results-table", "children"), Output("results-plot", "figure")],
-    [Input("run-query", "n_clicks")],
-    [
-        State("question-selector", "value"),
-        State("method-selector", "value"),
-        State("season-slider", "value"),
-    ],
-)
-def run_query(n_clicks, question, method, season):
-    """Exécute la requête et retourne les résultats"""
-    if n_clicks is None:
-        return dash.no_update, dash.no_update
-    query_func = get_question(question)
+            params = {}
+            if question_label == "q1":
+                params["nb_victoires"] = st.number_input(
+                    "Seuil minimum de victoires", min_value=0, value=30
+                )
+            elif question_label == "q2":
+                params["saison"] = st.slider(
+                    "Saison2", min_value=1950, max_value=2023, value=2023
+                )
+            elif question_label == "q4":
+                params["saison"] = st.slider(
+                    "Saison4", min_value=1950, max_value=2023, value=2023
+                )
+            elif question_label == "q5":
+                params["saison"] = st.slider(
+                    "Saison5", min_value=1950, max_value=2023, value=2023
+                )
 
-    results_df, plot_fig = query_func(
-        method=method,
-        season=season,
-    )
+            if st.button("Exécuter", key=f"btn-{question_label}"):
+                # Appel de la fonction
+                if method:
+                    df = query_func(method=method, **params)
+                else:
+                    df = query_func(**params)
 
-    table = dash_table.DataTable(
-        data=results_df.to_dict("records"),
-        columns=[{"name": i, "id": i} for i in results_df.columns],
-        page_size=10,
-        style_table={"overflowX": "auto"},
-    )
+                st.subheader("🧾 Données")
+                st.dataframe(df)
 
-    return table, plot_fig
+                if plot_func:
+                    st.subheader("📈 Visualisation")
+                    fig = plot_func(df)
+                    st.plotly_chart(fig, use_container_width=True)
 
+# ========== ONGLET 2 : RÉGRESSION ==========
+with tabs[1]:
+    st.header("📊 Modèle de Régression")
+    st.info("À compléter : affichage des résultats de la régression linéaire.")
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# ========== ONGLET 3 : RÉSEAU DE NEURONES ==========
+with tabs[2]:
+    st.header("🧠 Prédictions par réseau de neurones")
+    st.info("À compléter : chargement modèle, prédictions, visualisation.")
