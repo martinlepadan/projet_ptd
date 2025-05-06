@@ -124,7 +124,7 @@ def classement_saison(saison: int = 2023) -> pd.DataFrame:
     return df_final.reset_index()
 
 
-def temps_de_carriere_pilotes() -> pd.DataFrame:
+def temps_de_carriere_pilotes(duree_min: int) -> pd.DataFrame:
     """
     Calcule le temps de carrière de chaque pilote
 
@@ -154,6 +154,8 @@ def temps_de_carriere_pilotes() -> pd.DataFrame:
 
     # Tri par durée décroissante
     carriere = carriere.sort_values("duree", ascending=False).reset_index(drop=True)
+
+    carriere = carriere[carriere["duree"] >= duree_min].copy()
 
     return carriere
 

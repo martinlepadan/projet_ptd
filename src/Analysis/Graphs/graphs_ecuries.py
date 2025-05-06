@@ -13,15 +13,15 @@ def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str) -> px.bar:
     Parameters
     ----------
     data : pd.DataFrame
-        
-        
+
+
     Returns
     -------
-    
+
     """
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data)
-    
+
     data = data.sort_values("points", ascending=True)
     
     if methode == 'plotly':
