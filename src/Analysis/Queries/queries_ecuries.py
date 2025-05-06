@@ -104,3 +104,5 @@ def victoiresEcuriesRelatif(method: str, ecurie: str) -> pd.DataFrame:
         print(nbrParticipation)
         print(f"\nNombre moyen de victoires de l'écurie {ecurie} par saison :")
         print((nbrWins / nbrParticipation))
+        
+        return(nbrWins,nbrParticipation,nbrWins/nbrParticipation)

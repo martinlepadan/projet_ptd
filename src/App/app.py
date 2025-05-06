@@ -27,6 +27,7 @@ with tabs[0]:
         "Écuries": {
             "q4": "Classement des écuries par année",
             "q8": "Classement écuries par saison",
+            "q9": "Nombre victoire par écurie par saison"
         },
         "Pit-Stops": {
             "q5": "Temps moyen de pit-stop par écurie",
@@ -43,6 +44,7 @@ with tabs[0]:
         "q5": "🔧",
         "q7": "🧑‍💼",
         "q8": "🏆",
+        "q9": "🏅",
     }
 
     descriptions = {
@@ -52,7 +54,8 @@ with tabs[0]:
         "q4": "Montre le classement des écuries pour une saison donnée.",
         "q5": "Compare le temps moyen des pit-stops par écurie.",
         "q7": "Fournit un résumé statistique de la carrière d'un pilote.",
-        "q8": "Affiche le classement final des écuries pour une saison donnée."
+        "q8": "Affiche le classement final des écuries pour une saison donnée.",
+        "q9": "Renvoie le nombre de victoires pour une écurie donnée à la saison donnée.",
     }
 
     for theme, questions in THEMES.items():
@@ -71,7 +74,7 @@ with tabs[0]:
             plot_func = get_graph(question_label)
 
             method = None
-            if question_label in ["q1", "q8", "q5", "q6"]:
+            if question_label in ["q1", "q8", "q5", "q6", "q9"]:
                 method = st.selectbox(
                     "⚙️ Méthode",
                     options=["pandas", "homemade"],
@@ -131,6 +134,34 @@ with tabs[0]:
                     value=2023,
                     key="slider-q8",
                 )
+            elif question_label == "q9":
+                ecurie = pd.read_csv("data/constructors.csv")
+                ecurie_dispo = ecurie["name"].unique().tolist()
+                
+                params["ecurie"] = st.selectbox(
+                    "🏎️ Choisissez une écurie",
+                    options=sorted(ecurie_dispo),
+                    key="select-ecurie",
+                )
+                
+                params["saison"] = st.slider(
+                    "📅 Saison",
+                    min_value=1950,
+                    max_value=2023,
+                    value=2023,
+                    key="slider-q9",
+                )
+            elif question_label == "q10":
+                ecurie = pd.read_csv("data/constructors.csv")
+                ecurie_dispo = ecurie["name"].unique().tolist()
+                
+                params["ecurie"] = st.selectbox(
+                    "🏎️ Choisissez une écurie",
+                    options=sorted(ecurie_dispo),
+                    key="select-ecurie",
+                )
+                
+                
 
             if st.button("🚀 Exécuter", key=f"btn-{question_label}"):
                 if method:
@@ -157,7 +188,7 @@ with tabs[0]:
                     st.subheader("📊 Visualisation")
                     methode_graph = st.radio(
                         "Méthode d'affichage du graphe :",
-                        options=["matplotlib", "plotly"],
+                        options=["plotly", "matplotlib"],
                         key=f"graph-type-{question_label}",
                     )
 
