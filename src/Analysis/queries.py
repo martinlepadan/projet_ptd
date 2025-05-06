@@ -1,6 +1,6 @@
 """Fichier avec les différentes requêtes."""
 
-from Analysis.utils import get_pd_df, get_python_df
+from utils import get_pd_df, get_python_df
 import pandas as pd
 
 
@@ -33,7 +33,7 @@ def nombre_victoires_pilotes(method: str, nb_victoires: int = 0) -> pd.DataFrame
 
     return df
 
-nombre_victoires_pilotes('pandas', 30)
+#nombre_victoires_pilotes('pandas', 30)
 
 
 
@@ -81,7 +81,7 @@ def classement_saison(method: str, saison: int = 2023) -> pd.DataFrame:
 
     return df_final
 
-classement_saison('pandas', 2023)
+#classement_saison('pandas', 2023)
 
 
 
@@ -150,15 +150,11 @@ def ecuriesPoints(method: str, saison = int(input("Choisir l'année de la saison
         9: 2,
         10: 1
     }
-    
-    # Requête SQL :
-    query = "SELECT * FROM results INNER JOIN races USING(raceId) \
-            LEFT JOIN constructors USING(constructorId) ;"
-    
+
     if method == 'pandas':
         
-        # On exécute la requête SQL pour créer le dataframe
-        df = get_query_as_df(query)
+        # On exécute la requête pour créer le dataframe
+        df = get_pd_df(["results", "races", "constructors"], ["raceId", "constructorId"])
         
         # On trie selon l'année
         df = df.loc[df["year"] == saison]
@@ -173,36 +169,73 @@ def ecuriesPoints(method: str, saison = int(input("Choisir l'année de la saison
         print(f"\nClassement des écuries pour la saison {saison} :")
         print(classement)
         
-#ecuriesPoints('pandas')
+ecuriesPoints('pandas')
 
 
 
 
-########### Nombre de victoires par écuries :
 
-def victoiresEcuries(method: str) -> pd.DataFrame:
+########### Nombre de victoires par écuries par an :
+
+def victoiresEcuries(method: str, ecurie = str(input("Choisir l'écurie : ")), saison = int(input("Choisir l'année : ")))  -> pd.DataFrame:
     
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
-    
-    # Requête SQL
-    query = "SELECT * FROM results INNER JOIN races USING(raceId) \
-            LEFT JOIN constructors USING(constructorId) ;"
             
     if method == 'pandas':
+
+        df = get_pd_df(["constructor_standings", "constructors", "races"], ["constructorId", "raceId"])
+
+        df = df.loc[(df["name_x"] == ecurie) & (df["year"] == saison)]
         
-        # On exécute la requête SQL pour créer le dataframe
-        df = get_query_as_df(query)
+        df = df.loc[df["position"] == 1]
         
-        
-        
-#victoiresEcuries('pandas')
+        print(f"Nombre de victoire de l'écurie {ecurie} lors de la saison {saison} :")
+        print(df.shape[0])
+
+victoiresEcuries('pandas')
+
+
 
 
 
 ########### Nombre de victoires par écurie en relatif :
 
+def victoiresEcuriesRelatif(method: str, ecurie = str(input("Choisir l'écurie : ")))  -> pd.DataFrame:
+    
+    if method not in ["pandas", "homemade"]:
+        raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
+            
+    if method == 'pandas':
+        
+        # On créé le dataframe correspondant au nombre de victoires totale de l'écurie :
+        
+        df = get_pd_df(["constructor_standings", "constructors", "races"], ["constructorId", "raceId"])
 
+        df = df.loc[df["name_x"] == ecurie]
+
+        df = df.loc[df["position"] == 1]
+        
+        nbrWins = df.shape[0]
+        
+        #On créé un second dataframe pour calculer le nombre d'années de participation de l'écurie (pour pouvoir calculer le relatif ensuite)
+        
+        df2 = get_pd_df(["constructor_standings", "constructors", "races"], ["constructorId", "raceId"])
+        
+        df2 = df2.loc[df2["name_x"] == ecurie]
+        
+        nbrParticipation = len(pd.unique(df2["year"]))
+        
+        #On effectue le calcul final :
+        
+        print(f"\nNombre total de victoires de l'écurie {ecurie} :")
+        print(nbrWins)
+        print(f"\nNombre de saison auxquelles l'écurie {ecurie} a participée :")
+        print(nbrParticipation)
+        print(f"\nNombre moyen de victoires de l'écurie {ecurie} par saison :")
+        print((nbrWins/nbrParticipation))
+        
+victoiresEcuriesRelatif('pandas')
 
 
 
@@ -216,6 +249,74 @@ def victoiresEcuries(method: str) -> pd.DataFrame:
 
 
 
+def pit_stop(method: str, saison = int(input("Choisir la saison : "))) -> pd.DataFrame:
+    
+    if method not in ["pandas", "homemade"]:
+        raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
+
+    if method == "pandas":
+        
+        df = get_pd_df(["pit_stops", "races", "results", "constructors"], ["raceId", "driverId", "constructorId"])
+        
+        # On filtre selon l'année de la saison
+        df = df.drop(df[df.year != saison].index)
+        
+        #On supprime les valeurs abberantes 
+        df = df.drop(df[df.milliseconds_x > 300000].index)
+        
+        # faut drop : manor ; hrt ; 
+        
+        constructor_merge_dict = {
+            "force_india": "Aston Martin", # ex-Force India → Racing Point → Aston Martin
+            "racing_point": "Aston Martin",
+            "aston_martin": "Aston Martin",
+            
+            "minardi": "AlphaTauri", # ex-Minardi → Toro Rosso → AlphaTauri
+            "toro_rosso": "AlphaTauri",  
+            "alphatauri": "AlphaTauri",
+            "rb": "AlphaTauri",
+            
+            "benetton": "Alpine", # ex-Toleman → Benetton → Renault → Lotus → Renault → Alpine
+            "renault": "Alpine",
+            "lotus_f1": "Alpine",
+            "alpine": "Alpine",
+            
+            "bmw_sauber": "Alfa Romeo", # ex-BMW Sauber → Sauber → Alfa → Alfa Romeo
+            "sauber": "Alfa Romeo",
+            "alfa": "Alfa Romeo",
+            "alfa_romeo": "Alfa Romeo",
+            
+            "red_bull":"Red Bull",
+            
+            "mercedes": "Mercedes",
+            
+            "mclaren": "McLaren",
+            
+            "williams": "Williams",
+            
+            "ferrari": 'Ferrari',
+            
+            "haas": "Hass"
+            }
+        
+        df["constructor_unifie"] = df["constructorRef"].replace(constructor_merge_dict)
+        
+        df = df[~df["constructorRef"].isin(["hrt", "manor"])]
+    
+        # Calcul du temps de pit stop moyen par écurie
+        df_final = (
+            df.groupby("constructor_unifie")["milliseconds_x"]
+            .mean()
+            .reset_index()
+            .rename(columns={"milliseconds_x": "pit_stop_moyen"})
+            .sort_values("pit_stop_moyen")
+            .reset_index(drop=True)
+        )
+
+        print(df_final)
+
+
+pit_stop('pandas')
 
 
 
@@ -268,38 +369,28 @@ def victoiresEcuries(method: str) -> pd.DataFrame:
 
 
 
-# Temps de pit-stop par écurie
-# Temps de pit-stop par écurie
-def pit_stop(method: str, saison: int = 2023) -> pd.DataFrame:
-
-    if method not in ["pandas", "homemade"]:
-        raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
-    # On récupère les données que l'on filtre avec la saison désirée
-    query = "SELECT duration, name , constructorId FROM pit_stops \
-             LEFT JOIN results USING(driverId) LEFT JOIN  \
-             constructors USING(constructorId) ;"
-
-    if method == "pandas":
-        df = get_python_df(query)
-
-        # On trie d'abord le temps de pit-stop par écurie
-        df_temps = df[["name", "duration"]].groupby("name").sum()
-
-        # On trie selon les meilleurs temps de pit-stop
-        df_final = df_temps.sort_values(["duration"])
-
-        # On calcule le temps de pit stop moyen par écurie
-        df_final["tmps_pit_stop_moyen"] = df_temps["duration"] / df_final.drop(
-            "duration", axis=1
-        ).sum(axis=1)
-
-    else:
-        pass
-
-    return df_final
 
 
-print(classement_saison("pandas", 2023))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#print(classement_saison("pandas", 2023))
 
 # Classement par nationalité
 
