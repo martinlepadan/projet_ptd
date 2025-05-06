@@ -3,6 +3,8 @@
 import streamlit as st
 import pandas as pd
 from src.Analysis.router import get_question, get_graph
+import io
+# import matplotlib.pyplot as plt
 
 
 st.set_page_config(page_title="F1 Analysis App", layout="wide")
@@ -139,10 +141,35 @@ with tabs[0]:
                     icon=":material/download:",
                 )
 
-                st.subheader("📊 Visualisation")
-                fig = plot_func(df)
-                st.plotly_chart(fig, use_container_width=True)
+                if plot_func is not False:
 
+                    st.subheader("📊 Visualisation")
+                    methode_graph = st.radio(
+                        "Méthode d'affichage du graphe :",
+                        options=["matplotlib", "plotly"],
+                        key=f"graph-type-{question_label}",
+                    )
+
+                    if methode_graph == "plotly":
+                        fig = plot_func(df, methode=methode_graph)
+                        st.plotly_chart(fig)
+                    if methode_graph == "matplotlib":
+                        fig = plot_func(df, methode=methode_graph)
+                        st.pyplot(fig)
+                        filename_png = st.text_input(
+                            "Nom du fichier PNG", "graphique.png", key="png-filename"
+                        )
+                        buffer = io.BytesIO()
+                        fig.savefig(buffer, format="png")
+                        buffer.seek(0)
+                        st.download_button(
+                            label="Télécharger les données (.png)",
+                            data=buffer,
+                            file_name=filename_png,
+                            mime="image/png",
+                            key=f"png-{question_label}",
+                            icon=":material/download:",
+                        )
 
 # ========== ONGLET 2 : RÉGRESSION ========== #
 with tabs[1]:

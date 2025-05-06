@@ -24,4 +24,4 @@ def get_graph(question_id):
         # "q5": graphs_pit_stops.plot_temps_pit_stop,
         "q7": graphs_pilotes.plot_statistiques_pilote,
     }
-    return functions.get(question_id)
+    return functions.get(question_id, False)
