@@ -1,4 +1,4 @@
-"""Fichier pour créer les graphes pour chaque question"""
+"""Fichier pour créer les graphes pour chaque question concernant les pilotes"""
 
 import pandas as pd
 import plotly.express as px
