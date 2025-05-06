@@ -12,7 +12,6 @@ tabs = st.tabs(["Requêtes", "Régression", "Réseau de Neurones"])
 with tabs[0]:
     st.header("Analyse par thématique")
 
-    # Thèmes et questions disponibles
     THEMES = {
         "Pilotes": {
             "q1": "Nombre de victoires par pilote",
@@ -24,8 +23,16 @@ with tabs[0]:
         "Circuits": {"q6": "Performances par type de circuit"},
     }
 
+    emojis = {
+        "Pilotes": "🏁",
+        "Écuries": "🏎️",
+        "Pit-Stops": "🛠️",
+        "Circuits": "🛤️",
+    }
+
     for theme, questions in THEMES.items():
-        with st.expander(f"📂 {theme}", expanded=False):
+        emoji = emojis.get(theme, "📂")
+        with st.expander(f"{emoji} {theme}", expanded=False):
             question_label = st.selectbox(
                 f"Question ({theme})",
                 options=list(questions.keys()),
@@ -36,11 +43,11 @@ with tabs[0]:
             plot_func = get_graph(question_label)
 
             # Sélecteurs selon la question
-            method = "pandas"
-            if question_label in ["q1", "q2", "q4", "q5", "q6"]:
+            method = None
+            if question_label in ["q1", "q4", "q5", "q6"]:
                 method = st.selectbox(
                     "Méthode",
-                    options=["🐼 pandas", "🐍 homemade"],
+                    options=["pandas", "homemade"],
                     key=f"{question_label}-method",
                 )
 

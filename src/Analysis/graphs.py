@@ -37,8 +37,10 @@ def plot_nombre_victoires_pilotes(data) -> px.bar:
 
 def plot_classement_saison(data: pd.DataFrame) -> px.bar:
     """
-    Affiche un graphique empilé représentant la répartition des positions d'arrivée
-    (1ère place, 2e, etc.) pour les pilotes, triés par nombre de points décroissants.
+    Affiche un graphique empilé représentant la répartition des 3 premières positions
+    (1ère place = or, 2e = argent, 3e = bronze) pour les pilotes,
+    triés par nombre de points décroissants.
+    Exclut les pilotes n'ayant aucun podium.
 
     Parameters
     ----------
@@ -46,44 +48,58 @@ def plot_classement_saison(data: pd.DataFrame) -> px.bar:
         Résultat de classement_saison, contenant les colonnes :
         - nom_pilote
         - points
-        - colonnes "1", "2", "3", ..., représentant les positions
+        - "1", "2", "3"
 
     Returns
     -------
     plotly.graph_objects.Figure
-        Graphique à barres horizontales empilées
+        Graphique à barres horizontales empilées (or, argent, bronze)
     """
-
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data)
 
-    # Identifier les colonnes de positions (entiers uniquement)
-    position_cols = [col for col in data.columns if col.isdigit()]
+    podium_cols = ["1", "2", "3"]
+
+    # Supprimer les pilotes sans podium
+    data["total_podiums"] = data[podium_cols].sum(axis=1)
+    data = data[data["total_podiums"] > 0].copy()
+
+    # Renommer les colonnes pour affichage
+    data = data.rename(
+        columns={"1": "Or", "2": "Argent", "3": "Bronze", "nom_pilote": "Nom"}
+    )
+
+    # Tri par points pour affichage
     data_sorted = data.sort_values("points", ascending=True)
 
-    # Transformation pour graphique empilé
+    # Transformation en format long pour empilement
     melted = data_sorted.melt(
-        id_vars="nom_pilote",
-        value_vars=position_cols,
+        id_vars="Nom",
+        value_vars=["Or", "Argent", "Bronze"],
         var_name="Position",
         value_name="Nombre",
     )
 
+    couleur_medaille = {"Or": "#FFD700", "Argent": "#C0C0C0", "Bronze": "#CD7F32"}
+
     fig = px.bar(
         melted,
         x="Nombre",
-        y="nom_pilote",
+        y="Nom",
         color="Position",
+        color_discrete_map=couleur_medaille,
         orientation="h",
-        title="Répartition des positions d'arrivée par pilote",
-        labels={"nom_pilote": "Pilote", "Nombre": "Arrivées"},
+        title="Nombre de podiums par pilote (or, argent, bronze)",
+        labels={"Nom": "Pilote", "Nombre": "Podiums"},
+        text_auto=True
     )
 
     fig.update_layout(
         barmode="stack",
         yaxis=dict(title="Pilote"),
-        xaxis=dict(title="Nombre total de positions"),
+        xaxis=dict(title="Total podiums"),
     )
+
     return fig
 
 

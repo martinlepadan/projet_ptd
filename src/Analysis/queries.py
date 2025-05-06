@@ -1,6 +1,6 @@
 """Fichier avec les différentes requêtes."""
 
-from utils import get_pd_df, get_python_df
+from src.Analysis.utils import get_pd_df, get_python_df
 import pandas as pd
 
 
@@ -11,31 +11,33 @@ points_bareme = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 
 # Nombre de courses gagnées par pilote :
 def nombre_victoires_pilotes(method: str, nb_victoires: int = 30) -> pd.DataFrame:
     """
-    Calcule le nombre total de victoires par pilote sur l'ensemble de sa carrière,
-    puis filtre les pilotes ayant remporté au moins `nb_victoires`.
-
-    Parameters
-    ----------
-    method : str
-        Méthode de traitement à utiliser : "pandas" ou "homemade" (Python pur)
-    nb_victoires : int
-        Seuil minimum de victoires pour qu'un pilote soit inclus dans le résultat
+    Calcule le nombre total de victoires (positionText == '1') par pilote,
+    puis filtre ceux avec au moins `nb_victoires`.
 
     Returns
     -------
-    pd.DataFrame : Un tableau avec les colonnes ["nom_pilote", "wins"],
-                   trié par victoires décroissantes
+    pd.DataFrame : Colonnes ["nom_pilote", "wins"] trié décroissant
     """
-
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
 
     if method == "pandas":
-        df = get_pd_df(["drivers", "driver_standings"], ["driverId"])
+        df = get_pd_df(["drivers", "results"], ["driverId"])
+
         df["nom_pilote"] = df["forename"] + " " + df["surname"]
 
-        total_victoires = df.groupby("nom_pilote")["wins"].sum().reset_index()
+        # Filtrer les victoires
+        df_victoires = df[df["positionText"] == "1"]
+
+        # Compter les victoires par pilote
+        total_victoires = (
+            df_victoires.groupby("nom_pilote").size().reset_index(name="wins")
+        )
+
+        # Filtrer selon seuil
         total_victoires = total_victoires[total_victoires["wins"] >= nb_victoires]
+
+        # Tri décroissant
         total_victoires = total_victoires.sort_values(
             "wins", ascending=False
         ).reset_index(drop=True)
@@ -43,14 +45,16 @@ def nombre_victoires_pilotes(method: str, nb_victoires: int = 30) -> pd.DataFram
         return total_victoires
 
     else:
-        df = get_python_df(["drivers", "driver_standings"], ["driverId"])
+        # Version homemade
+        df = get_python_df(["drivers", "results"], ["driverId"])
 
         noms = [f"{prenom} {nom}" for prenom, nom in zip(df["forename"], df["surname"])]
-        wins = [int(w) if w.isdigit() else 0 for w in df["wins"]]
+        positions = df["positionText"]
 
         total_victoires = {}
-        for nom, nb in zip(noms, wins):
-            total_victoires[nom] = total_victoires.get(nom, 0) + nb
+        for nom, pos in zip(noms, positions):
+            if pos == "1":
+                total_victoires[nom] = total_victoires.get(nom, 0) + 1
 
         filtered = {n: v for n, v in total_victoires.items() if v >= nb_victoires}
         sorted_list = sorted(filtered.items(), key=lambda x: (-x[1], x[0]))
@@ -58,67 +62,74 @@ def nombre_victoires_pilotes(method: str, nb_victoires: int = 30) -> pd.DataFram
         return pd.DataFrame(sorted_list, columns=["nom_pilote", "wins"])
 
 
-nombre_victoires_pilotes("pandas", 30)
-
-
 def classement_saison(saison: int = 2023) -> pd.DataFrame:
     """
-    Retourne le classement des pilotes pour une saison donnée, en triant selon :
-    - le nombre total de points,
-    - le nombre de premières places, deuxièmes, etc. (pour départager les ex aequo).
-
-    Parameters
-    ----------
-    saison : int
-        Année de la saison à analyser (ex : 2023)
+    Retourne le classement des pilotes pour une saison donnée, en calculant les points
+    via le barème FIA à partir de la colonne 'position' (entier).
 
     Returns
     -------
     pd.DataFrame
-        Un tableau trié avec les colonnes :
+        Contient :
         - nom_pilote
         - points
-        - position 1, 2, 3, ... (selon les arrivées)
-        - pts_par_course : ratio points / total de courses
+        - colonnes "1", "2", "3", ... : nombre de positions obtenues
+        - pts_par_course : ratio points / total de participations
     """
-
-    # Chargement et fusion des données
+    # Fusion des données drivers + results + races
     df = get_pd_df(["drivers", "driver_standings", "races"], ["driverId", "raceId"])
 
     # Filtrage par saison
     df = df[df["year"] == saison].copy()
+
+    print(df.head())
+
+    # Créer le nom complet du pilote
     df["nom_pilote"] = df["forename"] + " " + df["surname"]
 
-    # Total de points par pilote
-    df_points = df.groupby("nom_pilote")[["points"]].sum()
+    # Garder les lignes avec position valide (entier positif)
+    df = df[df["position"].apply(lambda x: isinstance(x, (int, float)) and x > 0)]
+    df["position"] = df["position"].astype(int)
 
-    # Comptage des positions (1er, 2e, etc.)
-    df_valid_positions = df[df["positionText"].str.isdigit()]
+    # Appliquer le barème de points
+    df["points"] = df["position"].apply(lambda p: points_bareme.get(p, 0))
+
+    print(df["points"])
+
+    # Points totaux par pilote
+    df_points = df.groupby("nom_pilote")["points"].sum().to_frame()
+
+    # Comptage des positions 1, 2, 3, etc.
     df_rank = (
-        df_valid_positions.groupby(["nom_pilote", "positionText"])
+        df.groupby(["nom_pilote", "position"])
         .size()
         .unstack(fill_value=0)
     )
 
-    # Tri des colonnes de positions (1, 2, 3, ...)
-    sorted_columns = sorted(df_rank.columns, key=lambda x: int(x))
+    # Tri des colonnes de position
+    sorted_columns = sorted(df_rank.columns)
     df_rank = df_rank[sorted_columns]
 
-    # Fusion des points et classements
-    df_final = df_points.merge(df_rank, on="nom_pilote", how="left").fillna(0)
+    # Fusion des points et positions
+    df_final = df_points.merge(df_rank, on="nom_pilote").fillna(0)
 
-    # Tri global : points décroissants, puis par positions (plus de 1ères places, etc.)
+    # Tri : points décroissants, puis nombre de positions
     df_final = df_final.sort_values(
-        ["points"] + sorted_columns, ascending=[False] * (1 + len(sorted_columns))
+        ["points"] + sorted_columns,
+        ascending=[False] * (1 + len(sorted_columns))
     )
 
-    # Calcul du ratio points / courses
-    total_courses = df_final.drop(columns=["points"]).sum(axis=1)
+    # Ratio points / nombre total de courses disputées
+    total_courses = df_rank.sum(axis=1)
     df_final["pts_par_course"] = df_final["points"] / total_courses
 
-    df_final = df_final.reset_index()
+    # Renommer colonnes pour le graphique (en str : "1", "2", ...)
+    df_final.rename(columns={pos: str(pos) for pos in sorted_columns}, inplace=True)
 
-    return df_final
+    return df_final.reset_index()
+
+
+print(classement_saison(2023))
 
 
 def temps_de_carriere_pilotes() -> pd.DataFrame:
@@ -158,6 +169,7 @@ def temps_de_carriere_pilotes() -> pd.DataFrame:
 # ÉCURIES
 
 # Classement des écuries par année (avec nombre de points) :
+
 
 def ecuriesPoints(method: str, saison=2023) -> pd.DataFrame:
 
@@ -249,8 +261,6 @@ def pit_stop(method: str, saison: int = 2023) -> pd.DataFrame:
     else:
         pass
 
-
-print(pit_stop("pandas", 2023))
 # Top 7 des meilleurs temps aux pit-stops de chaque saison :
 
 # CIRCUITS
