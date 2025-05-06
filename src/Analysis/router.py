@@ -27,4 +27,4 @@ def get_graph(question_id):
         "q7": graphs_pilotes.plot_statistiques_pilote,
         "q8": graphs_ecuries.plot_classement_saison_ecuries
     }
-    return functions.get(question_id)
+    return functions.get(question_id, False)
