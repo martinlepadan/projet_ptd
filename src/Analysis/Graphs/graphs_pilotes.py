@@ -91,7 +91,7 @@ def plot_classement_saison(data: pd.DataFrame) -> px.bar:
         orientation="h",
         title="Nombre de podiums par pilote (or, argent, bronze)",
         labels={"Nom": "Pilote", "Nombre": "Podiums"},
-        text_auto=True
+        text_auto=True,
     )
 
     fig.update_layout(
@@ -130,4 +130,75 @@ def plot_temps_de_carriere_pilotes(data) -> px.bar:
     )
     fig.update_layout(xaxis_tickangle=-45)
 
+    return fig
+
+
+def plot_statistiques_pilote(df: pd.DataFrame) -> px.bar:
+    """
+    Affiche un graphique esthétique des statistiques d’un pilote :
+    podiums et nombre de courses participées.
+    """
+    if not isinstance(df, pd.DataFrame):
+        df = pd.DataFrame(df)
+
+    pilot = df.iloc[0]["nom_pilote"]
+    stats = {
+        "🥇 Or (1er)": df.iloc[0]["nb_podiums_1"],
+        "🥈 Argent (2e)": df.iloc[0]["nb_podiums_2"],
+        "🥉 Bronze (3e)": df.iloc[0]["nb_podiums_3"],
+        "🏁 Courses participées": df.iloc[0]["nb_courses"],
+    }
+
+    graph_df = pd.DataFrame(list(stats.items()), columns=["Statistique", "Valeur"])
+
+    fig = px.bar(
+        graph_df,
+        x="Valeur",
+        y="Statistique",
+        orientation="h",
+        text="Valeur",
+        color="Statistique",
+        color_discrete_map={
+            "🥇 Or (1er)": "#FFD700",
+            "🥈 Argent (2e)": "#C0C0C0",
+            "🥉 Bronze (3e)": "#CD7F32",
+            "🏁 Courses participées": "#7f7f7f",
+        },
+        title=f"Statistiques de carrière de {pilot}",
+    )
+
+    fig.update_traces(textposition="outside", marker_line_width=1.5)
+    fig.update_layout(
+        title_x=0.5,
+        xaxis_title=None,
+        yaxis_title=None,
+        showlegend=False,
+        height=400,
+        margin=dict(l=50, r=20, t=50, b=30),
+    )
+    return fig
+
+def plot_podium_ratio(df: pd.DataFrame) -> px.pie:
+    """
+    Graphe circulaire montrant la proportion de podiums vs autres arrivées.
+    """
+    pilot = df.iloc[0]["nom_pilote"]
+    total = df.iloc[0]["nb_courses"]
+    podiums = sum(df.iloc[0][f"nb_podiums_{i}"] for i in [1, 2, 3])
+    autres = total - podiums
+
+    pie_df = pd.DataFrame({
+        "Catégorie": ["Podiums", "Autres"],
+        "Valeur": [podiums, autres]
+    })
+
+    fig = px.pie(
+        pie_df,
+        values="Valeur",
+        names="Catégorie",
+        title=f"Proportion de podiums pour {pilot}",
+        color="Catégorie",
+        color_discrete_map={"Podiums": "#FFD700", "Autres": "#d3d3d3"},
+    )
+    fig.update_layout(title_x=0.5)
     return fig

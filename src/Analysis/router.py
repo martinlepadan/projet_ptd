@@ -1,22 +1,27 @@
 """Fichier permettant d'envoyer les questions et graphes vers l'application Dash"""
 
-import src.Analysis.queries as queries
-import src.Analysis.graphs as graphs
+from src.Analysis.Queries import queries_pilotes, queries_ecuries, queries_pit_stops
+from src.Analysis.Graphs import graphs_pilotes, graphs_ecuries, graphs_pit_stops
 
 
 def get_question(question_id):
     functions = {
-        "q1": queries.nombre_victoires_pilotes,
-        "q2": queries.classement_saison,
-        "q3": queries.temps_de_carriere_pilotes,
+        "q1": queries_pilotes.nombre_victoires_pilotes,
+        "q2": queries_pilotes.classement_saison,
+        "q3": queries_pilotes.temps_de_carriere_pilotes,
+        "q4": queries_ecuries.ecuriesPoints,
+        "q5": queries_pit_stops.pit_stop,
+        "q7": queries_pilotes.statistiques_pilote,
     }
     return functions.get(question_id)
 
 
 def get_graph(question_id):
     functions = {
-        "q1": graphs.plot_nombre_victoires_pilotes,
-        "q2": graphs.plot_classement_saison,
-        "q3": graphs.plot_temps_de_carriere_pilotes,
+        "q1": graphs_pilotes.plot_nombre_victoires_pilotes,
+        "q2": graphs_pilotes.plot_classement_saison,
+        "q3": graphs_pilotes.plot_temps_de_carriere_pilotes,
+        # "q5": graphs_pit_stops.plot_temps_pit_stop,
+        "q7": graphs_pilotes.plot_statistiques_pilote,
     }
     return functions.get(question_id)
