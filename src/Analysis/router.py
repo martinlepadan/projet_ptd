@@ -22,6 +22,6 @@ def get_graph(question_id):
         "q2": graphs_pilotes.plot_classement_saison,
         "q3": graphs_pilotes.plot_temps_de_carriere_pilotes,
         # "q5": graphs_pit_stops.plot_temps_pit_stop,
-        "q7": graphs_pilotes.plot_statistiques_pilote,
+        "q7": graphs_pilotes.plot_carriere_pilote,
     }
     return functions.get(question_id, False)

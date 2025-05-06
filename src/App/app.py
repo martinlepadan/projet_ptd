@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 from src.Analysis.router import get_question, get_graph
 import io
+
 # import matplotlib.pyplot as plt
 
 
@@ -89,6 +90,13 @@ with tabs[0]:
                     value=2023,
                     key="slider-q2",
                 )
+            elif question_label == "q3":
+                params["duree_min"] = st.number_input(
+                    "⏱️ Durée de carrière minimum (en années)",
+                    min_value=0,
+                    value=15,
+                    max_value=24,
+                )
             elif question_label == "q4":
                 params["saison"] = st.slider(
                     "📅 Saison",
@@ -121,17 +129,28 @@ with tabs[0]:
                     key="select-pilote",
                 )
 
-            if st.button("🚀 Exécuter", key=f"btn-{question_label}"):
+            run_button = st.button("🚀 Exécuter", key=f"btn-{question_label}")
+
+            if run_button:
                 if method:
                     df = query_func(method=method, **params)
                 else:
                     df = query_func(**params)
+                st.session_state[f"df_{question_label}"] = df
 
+            # Récupérer les données stockées
+            df = st.session_state.get(f"df_{question_label}")
+
+            if df is not None:
                 st.subheader("📄 Données")
                 st.dataframe(df)
 
                 st.subheader("💾 Exporter les données")
-                filename_csv = st.text_input("Nom du fichier CSV", "resultats.csv")
+                filename_csv = st.text_input(
+                    "Nom du fichier CSV",
+                    "resultats.csv",
+                    key=f"csv-filename-{question_label}",
+                )
                 st.download_button(
                     label="Télécharger les données (.csv)",
                     data=df.to_csv(index=False).encode("utf-8"),
@@ -142,34 +161,78 @@ with tabs[0]:
                 )
 
                 if plot_func is not False:
-
                     st.subheader("📊 Visualisation")
+
                     methode_graph = st.radio(
                         "Méthode d'affichage du graphe :",
                         options=["matplotlib", "plotly"],
                         key=f"graph-type-{question_label}",
                     )
 
-                    if methode_graph == "plotly":
-                        fig = plot_func(df, methode=methode_graph)
-                        st.plotly_chart(fig)
-                    if methode_graph == "matplotlib":
-                        fig = plot_func(df, methode=methode_graph)
-                        st.pyplot(fig)
-                        filename_png = st.text_input(
-                            "Nom du fichier PNG", "graphique.png", key="png-filename"
-                        )
-                        buffer = io.BytesIO()
-                        fig.savefig(buffer, format="png")
-                        buffer.seek(0)
-                        st.download_button(
-                            label="Télécharger les données (.png)",
-                            data=buffer,
-                            file_name=filename_png,
-                            mime="image/png",
-                            key=f"png-{question_label}",
-                            icon=":material/download:",
-                        )
+                    if question_label == "q7":
+                        figs = plot_func(df, methode=methode_graph)
+
+                        if methode_graph == "plotly":
+                            fig1, fig2 = figs
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.plotly_chart(fig1, use_container_width=True)
+                            with col2:
+                                st.plotly_chart(fig2, use_container_width=True)
+
+                        elif methode_graph == "matplotlib":
+                            fig = figs
+                            st.pyplot(fig)
+
+                            st.subheader("🖼️ Exporter le graphe")
+                            filename_png = st.text_input(
+                                "Nom du fichier PNG",
+                                "carriere_pilote.png",
+                                key=f"png-filename-{question_label}",
+                            )
+
+                            buffer = io.BytesIO()
+                            fig.savefig(buffer, format="png", bbox_inches="tight")
+                            buffer.seek(0)
+
+                            st.download_button(
+                                label="Télécharger le graphique (.png)",
+                                data=buffer,
+                                file_name=filename_png,
+                                mime="image/png",
+                                key=f"png-{question_label}",
+                                icon=":material/download:",
+                            )
+
+                        else:
+                            fig = plot_func(df, methode=methode_graph)
+
+                            if methode_graph == "plotly":
+                                st.plotly_chart(fig, use_container_width=True)
+
+                            elif methode_graph == "matplotlib":
+                                st.pyplot(fig)
+
+                                st.subheader("🖼️ Exporter le graphe")
+                                filename_png = st.text_input(
+                                    "Nom du fichier PNG",
+                                    "graphique.png",
+                                    key=f"png-filename-{question_label}",
+                                )
+
+                                buffer = io.BytesIO()
+                                fig.savefig(buffer, format="png", bbox_inches="tight")
+                                buffer.seek(0)
+
+                                st.download_button(
+                                    label="Télécharger le graphique (.png)",
+                                    data=buffer,
+                                    file_name=filename_png,
+                                    mime="image/png",
+                                    key=f"png-{question_label}",
+                                    icon=":material/download:",
+                                )
+
 
 # ========== ONGLET 2 : RÉGRESSION ========== #
 with tabs[1]:
