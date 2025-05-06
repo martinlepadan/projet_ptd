@@ -171,84 +171,165 @@ def temps_de_carriere_pilotes() -> pd.DataFrame:
 # Classement des écuries par année (avec nombre de points) :
 
 
-def ecuriesPoints(method: str, saison=2023) -> pd.DataFrame:
-
+def ecuriesPoints(method: str, saison = int(input("Choisir l'année de la saison : "))) -> pd.DataFrame:
+    
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
+    
+    # Barème de points FIA (valable pour la plupart des saisons modernes)
+    points_bareme = {
+        1: 25,
+        2: 18,
+        3: 15,
+        4: 12,
+        5: 10,
+        6: 8,
+        7: 6,
+        8: 4,
+        9: 2,
+        10: 1
+    }
 
-    if method == "pandas":
-
-        # On exécute la requête SQL pour créer le dataframe
-        df = get_pd_df(
-            ["results", "races", "constructors"], ["raceId", "constructorId"]
-        )
-
+    if method == 'pandas':
+        
+        # On exécute la requête pour créer le dataframe
+        df = get_pd_df(["results", "races", "constructors"], ["raceId", "constructorId"])
+        
         # On trie selon l'année
         df = df.loc[df["year"] == saison]
-
+        
         # On crée une colonne points en attribuant les bons points
         df["points"] = df["positionOrder"].apply(lambda pos: points_bareme.get(pos, 0))
-
+        
         # On regroupe les points par écurie
-        classement = (
-            df.groupby("constructorRef")["points"]
-            .sum()
-            .sort_values(ascending=False)
-            .reset_index()
-        )
+        classement = df.groupby("constructorRef")["points"].sum().sort_values(ascending=False).reset_index()
 
         # On affiche le classement final
         print(f"\nClassement des écuries pour la saison {saison} :")
         print(classement)
-
-
-# ecuriesPoints('pandas')
-
+        
+ecuriesPoints('pandas')
 
 # Nombre de victoires par écuries :
 
-
-def victoiresEcuries(method: str) -> pd.DataFrame:
-
+def victoiresEcuries(method: str, ecurie = str(input("Choisir l'écurie : ")), saison = int(input("Choisir l'année : ")))  -> pd.DataFrame:
+    
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
+            
+    if method == 'pandas':
 
-    if method == "pandas":
+        df = get_pd_df(["constructor_standings", "constructors", "races"], ["constructorId", "raceId"])
 
-        # On exécute la requête SQL pour créer le dataframe
-        df = get_pd_df(
-            ["results", "races", "constructors"], ["raceId", "constructorId"]
-        )
+        df = df.loc[(df["name_x"] == ecurie) & (df["year"] == saison)]
 
-        return df
+        df = df.loc[df["position"] == 1]
+        
+        print(f"Nombre de victoire de l'écurie {ecurie} lors de la saison {saison} :")
+        print(df.shape[0])
 
+victoiresEcuries('pandas')
 
-# victoiresEcuries('pandas')
+# Nombre de victoires par écurie en absolue + en relatif + nbr de saisons participées :
 
+def victoiresEcuriesRelatif(method: str, ecurie = str(input("Choisir l'écurie : ")))  -> pd.DataFrame:
+    
+    if method not in ["pandas", "homemade"]:
+        raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
+            
+    if method == 'pandas':
+        
+        # On créé le dataframe correspondant au nombre de victoires totale de l'écurie :
+        
+        df = get_pd_df(["constructor_standings", "constructors", "races"], ["constructorId", "raceId"])
 
-# Nombre de victoires par écurie en relatif :
+        df = df.loc[df["name_x"] == ecurie]
+
+        df = df.loc[df["position"] == 1]
+        
+        nbrWins = df.shape[0]
+        
+        #On créé un second dataframe pour calculer le nombre d'années de participation de l'écurie (pour pouvoir calculer le relatif ensuite)
+        
+        df2 = get_pd_df(["constructor_standings", "constructors", "races"], ["constructorId", "raceId"])
+        
+        df2 = df2.loc[df2["name_x"] == ecurie]
+        
+        nbrParticipation = len(pd.unique(df2["year"]))
+        
+        #On effectue le calcul final et on affiche les résultats :
+        
+        print(f"\nNombre total de victoires de l'écurie {ecurie} :")
+        print(nbrWins)
+        print(f"\nNombre de saison auxquelles l'écurie {ecurie} a participée :")
+        print(nbrParticipation)
+        print(f"\nNombre moyen de victoires de l'écurie {ecurie} par saison :")
+        print((nbrWins/nbrParticipation))
+        
+victoiresEcuriesRelatif('pandas')
 
 # PITS-STOPS
 
 # Quelle est l'écurie ayant la meilleure moyenne de temps au pit-stop depuis 1950 ?
 
 
-# Temps de pit stop par écurie
-def pit_stop(method: str, saison: int = 2023) -> pd.DataFrame:
+# Temps de pit stop par écurie en 2020
+def pit_stop(method: str, saison = 2020) -> pd.DataFrame:
+    
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
 
     if method == "pandas":
-        df = get_pd_df(
-            ["pit_stops", "results", "constructors"], ["driverId", "constructorId"]
-        )
-
-        # On supprime les lignes sans données valides de pit stop
-        df = df.dropna(subset=["milliseconds_x"])
-
+        
+        df = get_pd_df(["pit_stops", "races", "results", "constructors"], ["raceId", "driverId", "constructorId"])
+        
+        # On filtre selon l'année de la saison
+        df = df.drop(df[df.year != saison].index)
+        
+        #On supprime les valeurs abberantes 
+        df = df.drop(df[df.milliseconds_x > 300000].index)
+        
+        constructor_merge_dict = {
+            "force_india": "Aston Martin", # ex-Force India → Racing Point → Aston Martin
+            "racing_point": "Aston Martin",
+            "aston_martin": "Aston Martin",
+            
+            "minardi": "AlphaTauri", # ex-Minardi → Toro Rosso → AlphaTauri
+            "toro_rosso": "AlphaTauri",  
+            "alphatauri": "AlphaTauri",
+            "rb": "AlphaTauri",
+            
+            "benetton": "Alpine", # ex-Toleman → Benetton → Renault → Lotus → Renault → Alpine
+            "renault": "Alpine",
+            "lotus_f1": "Alpine",
+            "alpine": "Alpine",
+            
+            "bmw_sauber": "Alfa Romeo", # ex-BMW Sauber → Sauber → Alfa → Alfa Romeo
+            "sauber": "Alfa Romeo",
+            "alfa": "Alfa Romeo",
+            "alfa_romeo": "Alfa Romeo",
+            
+            "red_bull":"Red Bull", # On renomme proprement
+            
+            "mercedes": "Mercedes",
+            
+            "mclaren": "McLaren",
+            
+            "williams": "Williams",
+            
+            "ferrari": 'Ferrari',
+            
+            "haas": "Hass"
+            }
+        
+        df["constructor_unifie"] = df["constructorRef"].replace(constructor_merge_dict)
+        
+        #On supprime les écuries qui n'existent plus
+        df = df[~df["constructorRef"].isin(["hrt", "manor"])]
+    
         # Calcul du temps de pit stop moyen par écurie
         df_final = (
-            df.groupby("name")["milliseconds_x"]
+            df.groupby("constructor_unifie")["milliseconds_x"]
             .mean()
             .reset_index()
             .rename(columns={"milliseconds_x": "pit_stop_moyen"})
@@ -256,12 +337,9 @@ def pit_stop(method: str, saison: int = 2023) -> pd.DataFrame:
             .reset_index(drop=True)
         )
 
-        return df_final
+        print(df_final)
 
-    else:
-        pass
-
-# Top 7 des meilleurs temps aux pit-stops de chaque saison :
+pit_stop('pandas')
 
 # CIRCUITS
 
@@ -269,11 +347,6 @@ def pit_stop(method: str, saison: int = 2023) -> pd.DataFrame:
 
 
 # Performance des écuries selon le type de circuit (front ou rear limited) :
-
-
-# Temps de pit-stop par écurie
-# Temps de pit-stop par écurie
-
 
 # Classement par nationalité
 
