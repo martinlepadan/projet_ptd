@@ -5,6 +5,7 @@ import plotly.express as px
 
 # Q8 :
 
+
 def plot_classement_saison_ecuries(data: pd.DataFrame) -> px.bar:
     """
     Affiche un graphique empilé représentant le classement des écuries
@@ -13,15 +14,15 @@ def plot_classement_saison_ecuries(data: pd.DataFrame) -> px.bar:
     Parameters
     ----------
     data : pd.DataFrame
-        
-        
+
+
     Returns
     -------
-    
+
     """
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data)
-    
+
     data = data.sort_values("points", ascending=True)
 
     fig = px.bar(
@@ -41,5 +42,6 @@ def plot_classement_saison_ecuries(data: pd.DataFrame) -> px.bar:
     )
 
     return fig
+
 
 # Q9 :

@@ -53,7 +53,7 @@ with tabs[0]:
         "q4": "Montre le classement des écuries pour une saison donnée.",
         "q5": "Compare le temps moyen des pit-stops par écurie.",
         "q7": "Fournit un résumé statistique de la carrière d'un pilote.",
-        "q8": "Affiche le classement final des écuries pour une saison donnée."
+        "q8": "Affiche le classement final des écuries pour une saison donnée.",
     }
 
     for theme, questions in THEMES.items():
