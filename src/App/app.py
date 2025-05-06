@@ -24,6 +24,7 @@ with tabs[0]:
         },
         "Écuries": {
             "q4": "Classement des écuries par année",
+            "q8": "Classement écuries par saison",
         },
         "Pit-Stops": {
             "q5": "Temps moyen de pit-stop par écurie",
@@ -39,6 +40,7 @@ with tabs[0]:
         "q4": "📈",
         "q5": "🔧",
         "q7": "🧑‍💼",
+        "q8": "🏆",
     }
 
     descriptions = {
@@ -48,6 +50,7 @@ with tabs[0]:
         "q4": "Montre le classement des écuries pour une saison donnée.",
         "q5": "Compare le temps moyen des pit-stops par écurie.",
         "q7": "Fournit un résumé statistique de la carrière d'un pilote.",
+        "q8": "Affiche le classement final des écuries pour une saison donnée."
     }
 
     for theme, questions in THEMES.items():
@@ -66,7 +69,7 @@ with tabs[0]:
             plot_func = get_graph(question_label)
 
             method = None
-            if question_label in ["q1", "q4", "q5", "q6"]:
+            if question_label in ["q1", "q8", "q5", "q6"]:
                 method = st.selectbox(
                     "⚙️ Méthode",
                     options=["pandas", "homemade"],
@@ -117,6 +120,14 @@ with tabs[0]:
                     "👤 Choisissez un pilote",
                     options=sorted(pilote_dispo),
                     key="select-pilote",
+                )
+            elif question_label == "q8":
+                params["saison"] = st.slider(
+                    "📅 Saison",
+                    min_value=1950,
+                    max_value=2023,
+                    value=2023,
+                    key="slider-q8",
                 )
 
             if st.button("🚀 Exécuter", key=f"btn-{question_label}"):

@@ -32,10 +32,8 @@ def ecuriesPoints(method: str, saison: int) -> pd.DataFrame:
             .sort_values(ascending=False)
             .reset_index()
         )
-
-        # On affiche le classement final
-        print(f"\nClassement des écuries pour la saison {saison} :")
-        print(classement)
+        
+        return classement
 
 
 # Nombre de victoires par écuries :
@@ -57,8 +55,10 @@ def victoiresEcuries(method: str, ecurie: str, saison: int) -> pd.DataFrame:
 
         df = df.loc[df["position"] == 1]
 
-        print(f"Nombre de victoire de l'écurie {ecurie} lors de la saison {saison} :")
-        print(df.shape[0])
+        """ print(f"Nombre de victoire de l'écurie {ecurie} lors de la saison {saison} :")
+        print(df.shape[0]) """
+        
+        return(df.shape[0])
 
 
 # Nombre de victoires par écurie en absolue + en relatif + nbr de saisons participées :
