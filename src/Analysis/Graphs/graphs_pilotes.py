@@ -105,6 +105,7 @@ def plot_classement_saison(data: pd.DataFrame, methode: str = "plotly"):
         ax.barh(noms, bronze, left=or_ + argent, color="#CD7F32", label="Bronze")
         ax.set_title("Nombre de podiums par pilote (or, argent, bronze)")
         ax.set_xlabel("Nombre de podiums")
+        ax.set_xlim([0, (or_ + argent + bronze).max() * 1.1])  # 👈 nouvelle ligne
         ax.legend()
         plt.tight_layout()
         return fig
