@@ -4,8 +4,8 @@ from src.Analysis.utils import get_pd_df
 import pandas as pd
 
 
-# Temps de pit stop par écurie en 2020
-def pit_stop(method: str, saison: int) -> pd.DataFrame:
+# Temps moyen de pit stop par écurie en 2020
+def pit_stop(method: str, saison=2020) -> pd.DataFrame:
 
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
@@ -22,6 +22,7 @@ def pit_stop(method: str, saison: int) -> pd.DataFrame:
 
         # On supprime les valeurs abberantes
         df = df.drop(df[df.milliseconds_x > 300000].index)
+        df["secondes"] = round(df.milliseconds_x / 1000, 3)
 
         constructor_merge_dict = {
             "force_india": "Aston Martin",
@@ -54,24 +55,15 @@ def pit_stop(method: str, saison: int) -> pd.DataFrame:
 
         # Calcul du temps de pit stop moyen par écurie
         df_final = (
-            df.groupby("constructor_unifie")["milliseconds_x"]
+            df.groupby("constructor_unifie")["secondes"]
             .mean()
             .reset_index()
-            .rename(columns={"milliseconds_x": "pit_stop_moyen"})
+            .rename(columns={"secondes": "pit_stop_moyen"})
             .sort_values("pit_stop_moyen")
             .reset_index(drop=True)
         )
 
-        print(df_final)
+        return df_final
 
 
-# CIRCUITS
-
-# Meilleure écurie par circuit (input circuit) :
-
-
-# Performance des écuries selon le type de circuit (front ou rear limited) :
-
-# Classement par nationalité
-
-# Statistiques par circuit
+pit_stop("pandas")

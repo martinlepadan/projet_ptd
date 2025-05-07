@@ -7,13 +7,16 @@ import io
 
 
 st.set_page_config(page_title="Analyse de données F1", layout="wide")
-st.markdown("""
+st.markdown(
+    """
     <style>
     div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] p {
         font-size: 1.2rem;
         }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     "<h1 style='text-align: center;'>🏁 REDBULL PROJECT 🏁</h1>", unsafe_allow_html=True
@@ -35,7 +38,7 @@ with tabs[0]:
         "Écuries": {
             "q4": "Nombre de victoires par écurie par saison",
             "q8": "Classement écuries par saison",
-            "q9": "Nombre victoire par écurie par saison",
+            "q10": "Dashboard écuries",
         },
         "Pit-Stops": {
             "q5": "Temps moyen de pit-stop par écurie",
@@ -52,7 +55,7 @@ with tabs[0]:
         "q5": "🔧",
         "q7": "🧑‍💼",
         "q8": "🏆",
-        "q9": "🏅",
+        "q10": "📊",
     }
 
     descriptions = {
@@ -63,8 +66,7 @@ with tabs[0]:
         "q5": "Compare le temps moyen des pit-stops par écurie.",
         "q7": "Fournit un résumé statistique de la carrière d'un pilote.",
         "q8": "Affiche le classement final des écuries pour une saison donnée.",
-        "q9": "Renvoie le nombre de victoires pour une écurie "
-        "donnée à la saison donnée.",
+        "q10": "Renvoie un dashboard avec 3 statistiques générales d'écuries.",
     }
 
     for theme, questions in THEMES.items():
@@ -166,23 +168,6 @@ with tabs[0]:
                         value=2023,
                         key="slider-q8",
                     )
-                elif question_label == "q9":
-                    ecurie = pd.read_csv("data/constructors.csv")
-                    ecurie_dispo = ecurie["name"].unique().tolist()
-
-                    params["ecurie"] = st.selectbox(
-                        "🏎️ Choisissez une écurie",
-                        options=sorted(ecurie_dispo),
-                        key="select-ecurie",
-                    )
-
-                    params["saison"] = st.slider(
-                        "📅 Saison",
-                        min_value=1950,
-                        max_value=2023,
-                        value=2023,
-                        key="slider-q9",
-                    )
                 elif question_label == "q10":
                     ecurie = pd.read_csv("data/constructors.csv")
                     ecurie_dispo = ecurie["name"].unique().tolist()
@@ -191,108 +176,149 @@ with tabs[0]:
                         "🏎️ Choisissez une écurie",
                         options=sorted(ecurie_dispo),
                         key="select-ecurie",
+                        index=167,
+                    )
+                if question_label == "q10":
+                    st.subheader("📊 Dashboard - Statistiques de l'écurie")
+
+                    # Extraire les trois valeurs attendues du DataFrame
+                    total_victoires, nb_participations, moyenne_victoires = query_func(
+                        **params
                     )
 
-                if method:
-                    df = query_func(method=method, **params)
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric(
+                            label="🏆 Total des victoires",
+                            value=int(total_victoires),
+                            help=(
+                                "Nombre total de victoires enregistrées par l'écurie "
+                                "sur toutes ses saisons."
+                            ),
+                        )
+                    with col2:
+                        st.metric(
+                            label="📅 Saisons disputées",
+                            value=int(nb_participations),
+                            help=(
+                                "Nombre de saisons où l'écurie a participé à "
+                                "au moins une course."
+                            ),
+                        )
+                    with col3:
+                        st.metric(
+                            label="📈 Moyenne de victoires/saison",
+                            value=moyenne_victoires,
+                            help=(
+                                "Nombre moyen de victoires par saison "
+                                "pour cette écurie."
+                            ),
+                        )
                 else:
-                    df = query_func(**params)
-                st.session_state[f"df_{question_label}"] = df
+                    if method:
+                        df = query_func(method=method, **params)
+                    else:
+                        df = query_func(**params)
+                    st.session_state[f"df_{question_label}"] = df
 
-                # Récupérer les données stockées
-                df = st.session_state.get(f"df_{question_label}")
+                    # Récupérer les données stockées
+                    df = st.session_state.get(f"df_{question_label}")
 
-                if df is not None:
-                    st.subheader("📄 Données")
-                    st.dataframe(df)
+                    if df is not None:
+                        st.subheader("📄 Données")
+                        st.dataframe(df)
 
-                    st.subheader("💾 Exporter les données")
-                    filename_csv = st.text_input(
-                        "Nom du fichier CSV",
-                        "resultats.csv",
-                        key=f"csv-filename-{question_label}",
-                    )
-                    st.download_button(
-                        label="Télécharger les données (.csv)",
-                        data=df.to_csv(index=False).encode("utf-8"),
-                        file_name=filename_csv,
-                        mime="text/csv",
-                        key=f"csv-{question_label}",
-                        icon=":material/download:",
-                    )
-
-                    if plot_func is not False:
-                        st.subheader("📊 Visualisation")
-
-                        methode_graph = st.radio(
-                            "Méthode d'affichage du graphe :",
-                            options=["plotly", "matplotlib"],
-                            key=f"graph-type-{question_label}",
+                        st.subheader("💾 Exporter les données")
+                        filename_csv = st.text_input(
+                            "Nom du fichier CSV",
+                            "resultats.csv",
+                            key=f"csv-filename-{question_label}",
+                        )
+                        st.download_button(
+                            label="Télécharger les données (.csv)",
+                            data=df.to_csv(index=False).encode("utf-8"),
+                            file_name=filename_csv,
+                            mime="text/csv",
+                            key=f"csv-{question_label}",
+                            icon=":material/download:",
                         )
 
-                        if question_label == "q7":
-                            figs = plot_func(df, methode=methode_graph)
+                        if plot_func is not False:
+                            st.subheader("📊 Visualisation")
 
-                            if methode_graph == "plotly":
-                                fig1, fig2 = figs
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    st.plotly_chart(fig1, use_container_width=True)
-                                with col2:
-                                    st.plotly_chart(fig2, use_container_width=True)
+                            methode_graph = st.radio(
+                                "Méthode d'affichage du graphe :",
+                                options=["plotly", "matplotlib"],
+                                key=f"graph-type-{question_label}",
+                            )
 
-                            elif methode_graph == "matplotlib":
-                                fig = figs
-                                st.pyplot(fig)
+                            if question_label == "q7":
+                                figs = plot_func(df, methode=methode_graph)
 
-                                st.subheader("🖼️ Exporter le graphe")
-                                filename_png = st.text_input(
-                                    "Nom du fichier PNG",
-                                    "carriere_pilote.png",
-                                    key=f"png-filename-{question_label}",
-                                )
+                                if methode_graph == "plotly":
+                                    fig1, fig2 = figs
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        st.plotly_chart(fig1, use_container_width=True)
+                                    with col2:
+                                        st.plotly_chart(fig2, use_container_width=True)
 
-                                buffer = io.BytesIO()
-                                fig.savefig(buffer, format="png", bbox_inches="tight")
-                                buffer.seek(0)
+                                elif methode_graph == "matplotlib":
+                                    fig = figs
+                                    st.pyplot(fig)
 
-                                st.download_button(
-                                    label="Télécharger le graphique (.png)",
-                                    data=buffer,
-                                    file_name=filename_png,
-                                    mime="image/png",
-                                    key=f"png-{question_label}",
-                                    icon=":material/download:",
-                                )
+                                    st.subheader("🖼️ Exporter le graphe")
+                                    filename_png = st.text_input(
+                                        "Nom du fichier PNG",
+                                        "carriere_pilote.png",
+                                        key=f"png-filename-{question_label}",
+                                    )
 
-                        else:
-                            fig = plot_func(df, methode=methode_graph)
+                                    buffer = io.BytesIO()
+                                    fig.savefig(
+                                        buffer, format="png", bbox_inches="tight"
+                                    )
+                                    buffer.seek(0)
 
-                            if methode_graph == "plotly":
-                                st.plotly_chart(fig, use_container_width=True)
+                                    st.download_button(
+                                        label="Télécharger le graphique (.png)",
+                                        data=buffer,
+                                        file_name=filename_png,
+                                        mime="image/png",
+                                        key=f"png-{question_label}",
+                                        icon=":material/download:",
+                                    )
 
-                            elif methode_graph == "matplotlib":
-                                st.pyplot(fig)
+                            else:
+                                fig = plot_func(df, methode=methode_graph)
 
-                                st.subheader("🖼️ Exporter le graphe")
-                                filename_png = st.text_input(
-                                    "Nom du fichier PNG",
-                                    "graphique.png",
-                                    key=f"png-filename-{question_label}",
-                                )
+                                if methode_graph == "plotly":
+                                    st.plotly_chart(fig, use_container_width=True)
 
-                                buffer = io.BytesIO()
-                                fig.savefig(buffer, format="png", bbox_inches="tight")
-                                buffer.seek(0)
+                                elif methode_graph == "matplotlib":
+                                    st.pyplot(fig)
 
-                                st.download_button(
-                                    label="Télécharger le graphique (.png)",
-                                    data=buffer,
-                                    file_name=filename_png,
-                                    mime="image/png",
-                                    key=f"png-{question_label}",
-                                    icon=":material/download:",
-                                )
+                                    st.subheader("🖼️ Exporter le graphe")
+                                    filename_png = st.text_input(
+                                        "Nom du fichier PNG",
+                                        "graphique.png",
+                                        key=f"png-filename-{question_label}",
+                                    )
+
+                                    buffer = io.BytesIO()
+                                    fig.savefig(
+                                        buffer, format="png", bbox_inches="tight"
+                                    )
+                                    buffer.seek(0)
+
+                                    st.download_button(
+                                        label="Télécharger le graphique (.png)",
+                                        data=buffer,
+                                        file_name=filename_png,
+                                        mime="image/png",
+                                        key=f"png-{question_label}",
+                                        icon=":material/download:",
+                                    )
 
 
 # ========== ONGLET 2 : RÉGRESSION ========== #
