@@ -5,12 +5,19 @@ import pandas as pd
 from src.Analysis.router import get_question, get_graph
 import io
 
-# import matplotlib.pyplot as plt
 
+st.set_page_config(page_title="Analyse de données F1", layout="wide")
+st.markdown("""
+    <style>
+    div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] p {
+        font-size: 1.2rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-st.set_page_config(page_title="F1 Analysis App", layout="wide")
-
-st.title("🏎️ REDBULL PROJECT - Analyse des données F1")
+st.markdown(
+    "<h1 style='text-align: center;'>🏁 REDBULL PROJECT 🏁</h1>", unsafe_allow_html=True
+)
 
 tabs = st.tabs(["Requêtes", "Régression", "Réseau de Neurones"])
 
@@ -26,9 +33,9 @@ with tabs[0]:
             "q7": "Statistiques de carrière d'un pilote",
         },
         "Écuries": {
-            "q4": "Classement des écuries par année",
+            "q4": "Nombre de victoires par écurie par saison",
             "q8": "Classement écuries par saison",
-            "q9": "Nombre victoire par écurie par saison"
+            "q9": "Nombre victoire par écurie par saison",
         },
         "Pit-Stops": {
             "q5": "Temps moyen de pit-stop par écurie",
@@ -52,11 +59,12 @@ with tabs[0]:
         "q1": "Affiche les pilotes ayant gagné un certain nombre de courses.",
         "q2": "Affiche le classement final des pilotes pour une saison donnée.",
         "q3": "Montre la durée de carrière de chaque pilote.",
-        "q4": "Montre le classement des écuries pour une saison donnée.",
+        "q4": "Montre le nombre de victoires par écurie par saison.",
         "q5": "Compare le temps moyen des pit-stops par écurie.",
         "q7": "Fournit un résumé statistique de la carrière d'un pilote.",
         "q8": "Affiche le classement final des écuries pour une saison donnée.",
-        "q9": "Renvoie le nombre de victoires pour une écurie donnée à la saison donnée.",
+        "q9": "Renvoie le nombre de victoires pour une écurie "
+        "donnée à la saison donnée.",
     }
 
     for theme, questions in THEMES.items():
@@ -67,184 +75,195 @@ with tabs[0]:
                 options=list(questions.keys()),
                 format_func=lambda k: f"{question_emojis.get(k, '')} {questions[k]}",
                 key=f"{theme}-question",
+                index=None,
+                placeholder="Choisissez une question ...",
             )
 
             st.success(descriptions.get(question_label, "Sélectionnez une question."))
 
-            query_func = get_question(question_label)
-            plot_func = get_graph(question_label)
+            if question_label is not None:
+                query_func = get_question(question_label)
+                plot_func = get_graph(question_label)
 
-            method = None
-            if question_label in ["q1", "q8", "q5", "q6", "q9"]:
-                method = st.selectbox(
-                    "⚙️ Méthode",
-                    options=["pandas", "homemade"],
-                    key=f"{question_label}-method",
-                )
-
-            params = {}
-
-            if question_label == "q1":
-                params["nb_victoires"] = st.number_input(
-                    "🏁 Seuil minimum de victoires", min_value=0, value=30
-                )
-            elif question_label == "q2":
-                params["saison"] = st.slider(
-                    "📅 Saison",
-                    min_value=1950,
-                    max_value=2023,
-                    value=2023,
-                    key="slider-q2",
-                )
-            elif question_label == "q3":
-                params["duree_min"] = st.number_input(
-                    "⏱️ Durée de carrière minimum (en années)",
-                    min_value=0,
-                    value=15,
-                    max_value=24,
-                )
-            elif question_label == "q4":
-                params["saison"] = st.slider(
-                    "📅 Saison",
-                    min_value=1950,
-                    max_value=2023,
-                    value=2023,
-                    key="slider-q4",
-                )
-            elif question_label == "q5":
-                params["saison"] = st.slider(
-                    "📅 Saison",
-                    min_value=1950,
-                    max_value=2023,
-                    value=2023,
-                    key="slider-q5",
-                )
-            elif question_label == "q7":
-                drivers = pd.read_csv("data/drivers.csv")
-                pilote_dispo = (
-                    drivers.apply(
-                        lambda row: row["forename"] + " " + row["surname"], axis=1
+                method = None
+                if question_label in ["q1", "q8", "q5", "q6", "q9"]:
+                    method = st.selectbox(
+                        "⚙️ Méthode",
+                        options=["pandas", "homemade"],
+                        key=f"{question_label}-method",
                     )
-                    .unique()
-                    .tolist()
-                )
 
-                params["nom_pilote"] = st.selectbox(
-                    "👤 Choisissez un pilote",
-                    options=sorted(pilote_dispo),
-                    key="select-pilote",
-                )
-            elif question_label == "q8":
-                params["saison"] = st.slider(
-                    "📅 Saison",
-                    min_value=1950,
-                    max_value=2023,
-                    value=2023,
-                    key="slider-q8",
-                )
-            elif question_label == "q9":
-                ecurie = pd.read_csv("data/constructors.csv")
-                ecurie_dispo = ecurie["name"].unique().tolist()
-                
-                params["ecurie"] = st.selectbox(
-                    "🏎️ Choisissez une écurie",
-                    options=sorted(ecurie_dispo),
-                    key="select-ecurie",
-                )
-                
-                params["saison"] = st.slider(
-                    "📅 Saison",
-                    min_value=1950,
-                    max_value=2023,
-                    value=2023,
-                    key="slider-q9",
-                )
-            elif question_label == "q10":
-                ecurie = pd.read_csv("data/constructors.csv")
-                ecurie_dispo = ecurie["name"].unique().tolist()
-                
-                params["ecurie"] = st.selectbox(
-                    "🏎️ Choisissez une écurie",
-                    options=sorted(ecurie_dispo),
-                    key="select-ecurie",
-                )
-                
-                
+                params = {}
 
-            run_button = st.button("🚀 Exécuter", key=f"btn-{question_label}")
+                if question_label == "q1":
+                    params["nb_victoires"] = st.number_input(
+                        "🏁 Seuil minimum de victoires", min_value=0, value=30
+                    )
+                elif question_label == "q2":
+                    params["saison"] = st.slider(
+                        "📅 Saison",
+                        min_value=1950,
+                        max_value=2023,
+                        value=2023,
+                        key="slider-q2",
+                    )
+                elif question_label == "q3":
+                    params["duree_min"] = st.number_input(
+                        "⏱️ Durée de carrière minimum (en années)",
+                        min_value=0,
+                        value=15,
+                        max_value=24,
+                    )
+                elif question_label == "q4":
+                    ecurie = pd.read_csv("data/constructors.csv")
+                    ecurie_dispo = ecurie["name"].unique().tolist()
+                    params["ecuries"] = st.multiselect(
+                        "🏎️ Sélectionnez les écuries",
+                        options=sorted(ecurie_dispo),
+                        default=["Red Bull", "BMW", "Mercedes", "McLaren"],
+                        key="select-ecuries",
+                    )
+                    if len(params["ecuries"]) == 0:
+                        st.warning("Veuillez sélectionner au moins une écurie.")
+                        st.stop()
 
-            if run_button:
+                    params["saisons"] = st.slider(
+                        "📅 Saison",
+                        min_value=1950,
+                        max_value=2023,
+                        value=(1985, 2020),
+                        key="slider-q4",
+                    )
+                elif question_label == "q5":
+                    params["saison"] = st.slider(
+                        "📅 Saison",
+                        min_value=1950,
+                        max_value=2023,
+                        value=2023,
+                        key="slider-q5",
+                    )
+                elif question_label == "q7":
+                    drivers = pd.read_csv("data/drivers.csv")
+                    pilote_dispo = (
+                        drivers.apply(
+                            lambda row: row["forename"] + " " + row["surname"], axis=1
+                        )
+                        .unique()
+                        .tolist()
+                    )
+
+                    params["nom_pilote"] = st.selectbox(
+                        "👤 Choisissez un pilote",
+                        options=sorted(pilote_dispo),
+                        key="select-pilote",
+                        index=521,
+                    )
+                elif question_label == "q8":
+                    params["saison"] = st.slider(
+                        "📅 Saison",
+                        min_value=1950,
+                        max_value=2023,
+                        value=2023,
+                        key="slider-q8",
+                    )
+                elif question_label == "q9":
+                    ecurie = pd.read_csv("data/constructors.csv")
+                    ecurie_dispo = ecurie["name"].unique().tolist()
+
+                    params["ecurie"] = st.selectbox(
+                        "🏎️ Choisissez une écurie",
+                        options=sorted(ecurie_dispo),
+                        key="select-ecurie",
+                    )
+
+                    params["saison"] = st.slider(
+                        "📅 Saison",
+                        min_value=1950,
+                        max_value=2023,
+                        value=2023,
+                        key="slider-q9",
+                    )
+                elif question_label == "q10":
+                    ecurie = pd.read_csv("data/constructors.csv")
+                    ecurie_dispo = ecurie["name"].unique().tolist()
+
+                    params["ecurie"] = st.selectbox(
+                        "🏎️ Choisissez une écurie",
+                        options=sorted(ecurie_dispo),
+                        key="select-ecurie",
+                    )
+
                 if method:
                     df = query_func(method=method, **params)
                 else:
                     df = query_func(**params)
                 st.session_state[f"df_{question_label}"] = df
 
-            # Récupérer les données stockées
-            df = st.session_state.get(f"df_{question_label}")
+                # Récupérer les données stockées
+                df = st.session_state.get(f"df_{question_label}")
 
-            if df is not None:
-                st.subheader("📄 Données")
-                st.dataframe(df)
+                if df is not None:
+                    st.subheader("📄 Données")
+                    st.dataframe(df)
 
-                st.subheader("💾 Exporter les données")
-                filename_csv = st.text_input(
-                    "Nom du fichier CSV",
-                    "resultats.csv",
-                    key=f"csv-filename-{question_label}",
-                )
-                st.download_button(
-                    label="Télécharger les données (.csv)",
-                    data=df.to_csv(index=False).encode("utf-8"),
-                    file_name=filename_csv,
-                    mime="text/csv",
-                    key=f"csv-{question_label}",
-                    icon=":material/download:",
-                )
-
-                if plot_func is not False:
-                    st.subheader("📊 Visualisation")
-
-                    methode_graph = st.radio(
-                        "Méthode d'affichage du graphe :",
-                        options=["plotly", "matplotlib"],
-                        key=f"graph-type-{question_label}",
+                    st.subheader("💾 Exporter les données")
+                    filename_csv = st.text_input(
+                        "Nom du fichier CSV",
+                        "resultats.csv",
+                        key=f"csv-filename-{question_label}",
+                    )
+                    st.download_button(
+                        label="Télécharger les données (.csv)",
+                        data=df.to_csv(index=False).encode("utf-8"),
+                        file_name=filename_csv,
+                        mime="text/csv",
+                        key=f"csv-{question_label}",
+                        icon=":material/download:",
                     )
 
-                    if question_label == "q7":
-                        figs = plot_func(df, methode=methode_graph)
+                    if plot_func is not False:
+                        st.subheader("📊 Visualisation")
 
-                        if methode_graph == "plotly":
-                            fig1, fig2 = figs
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                st.plotly_chart(fig1, use_container_width=True)
-                            with col2:
-                                st.plotly_chart(fig2, use_container_width=True)
+                        methode_graph = st.radio(
+                            "Méthode d'affichage du graphe :",
+                            options=["plotly", "matplotlib"],
+                            key=f"graph-type-{question_label}",
+                        )
 
-                        elif methode_graph == "matplotlib":
-                            fig = figs
-                            st.pyplot(fig)
+                        if question_label == "q7":
+                            figs = plot_func(df, methode=methode_graph)
 
-                            st.subheader("🖼️ Exporter le graphe")
-                            filename_png = st.text_input(
-                                "Nom du fichier PNG",
-                                "carriere_pilote.png",
-                                key=f"png-filename-{question_label}",
-                            )
+                            if methode_graph == "plotly":
+                                fig1, fig2 = figs
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    st.plotly_chart(fig1, use_container_width=True)
+                                with col2:
+                                    st.plotly_chart(fig2, use_container_width=True)
 
-                            buffer = io.BytesIO()
-                            fig.savefig(buffer, format="png", bbox_inches="tight")
-                            buffer.seek(0)
+                            elif methode_graph == "matplotlib":
+                                fig = figs
+                                st.pyplot(fig)
 
-                            st.download_button(
-                                label="Télécharger le graphique (.png)",
-                                data=buffer,
-                                file_name=filename_png,
-                                mime="image/png",
-                                key=f"png-{question_label}",
-                                icon=":material/download:",
-                            )
+                                st.subheader("🖼️ Exporter le graphe")
+                                filename_png = st.text_input(
+                                    "Nom du fichier PNG",
+                                    "carriere_pilote.png",
+                                    key=f"png-filename-{question_label}",
+                                )
+
+                                buffer = io.BytesIO()
+                                fig.savefig(buffer, format="png", bbox_inches="tight")
+                                buffer.seek(0)
+
+                                st.download_button(
+                                    label="Télécharger le graphique (.png)",
+                                    data=buffer,
+                                    file_name=filename_png,
+                                    mime="image/png",
+                                    key=f"png-{question_label}",
+                                    icon=":material/download:",
+                                )
 
                         else:
                             fig = plot_func(df, methode=methode_graph)
