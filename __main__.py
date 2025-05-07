@@ -8,6 +8,7 @@ import sys
 import importlib
 import time
 
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 REQUIRED_PACKAGES = ["pandas", "numpy", "sklearn", "streamlit", "plotly", "keyboard"]
 
 

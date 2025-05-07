@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import numpy as np
 
 
-def plotly_loss_curves(train_losses: list[float], test_metrics: dict) -> go.Figure:
+def plot_loss_curves(train_losses: list[float], test_metrics: dict) -> go.Figure:
     """
     Trace l'évolution de la perte (loss) pour l'entraînement et le test avec Plotly.
 
@@ -57,7 +57,7 @@ def plotly_loss_curves(train_losses: list[float], test_metrics: dict) -> go.Figu
     return fig
 
 
-def plotly_accuracy_curves(
+def plot_accuracy_curves(
     train_accuracies: list[float], test_metrics: dict
 ) -> go.Figure:
     """

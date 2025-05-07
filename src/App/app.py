@@ -1,9 +1,9 @@
 """Application Streamlit"""
 
+import os
 import streamlit as st
 import pandas as pd
 import io
-import os
 import time
 import keyboard
 import psutil
@@ -334,7 +334,7 @@ with tabs[0]:
                                 elif methode_graph == "matplotlib":
                                     st.pyplot(fig)
 
-                                    st.subheader("🖼️ Exporter le graphe")
+                                    st.markdown("##### 🖼️ Exporter le graphe")
                                     filename_png = st.text_input(
                                         "Nom du fichier PNG",
                                         "graphique.png",
@@ -473,6 +473,19 @@ if bonus_mode:
 
     with tabs[3]:
         st.header("🤖 Prédictions par réseau de neurones")
+        st.markdown(
+            """
+                    - Ce modèle repose sur un **réseau de neurones PyTorch**.
+                    - Il permet de prédire une variable cible (continue ou binaire)
+                    à partir de données de course.
+                    - L'utilisateur peut personnaliser l'architecture : couches,
+                    dropout, learning rate, etc.
+                    - Des graphiques interactifs affichent l'évolution de la perte et
+                    de l'accuracy.
+                    - Le but n'est absolument pas de faire de bonnes prédictions, mais
+                    juste d'explorer de façon amusante le jeu de données.
+                    """
+        )
 
         st.markdown("Sélectionnez les paramètres de votre modèle :")
 
@@ -530,6 +543,9 @@ if bonus_mode:
             "points_cs",
             "position_cs",
             "wins_cs",
+            "circuitId",
+            "constructorRef",
+            "driverRef",
         ]
 
         df = df[selected_columns].rename(
@@ -549,6 +565,9 @@ if bonus_mode:
                 "points_cs": "Points écurie saison",
                 "position_cs": "Position écurie saison",
                 "wins_cs": "Victoires de l'écurie",
+                "circuitId": "Circuit",
+                "constructorRef": "Écurie",
+                "driverRef": "Pilote",
             }
         )
 
