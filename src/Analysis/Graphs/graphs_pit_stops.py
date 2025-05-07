@@ -54,37 +54,37 @@ def plot_temps_pit_stop(data, methode: str):
         raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
 
 
-def plot_max_pit_stop(data, methode: str):
+def plot_min_pit_stop(data, methode: str):
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data)
 
-    data_sorted = data.sort_values("Pit Stop Max", ascending=True)
+    data_sorted = data.sort_values("Pit Stop Min", ascending=True)
 
     if methode == "plotly":
         fig = px.bar(
             data_sorted,
             x="year",
-            y="Pit Stop Max",
+            y="Pit Stop Min",
             range_y=[
-                min(data_sorted["Pit Stop Max"]) - 0.2,
-                max(data_sorted["Pit Stop Max"]) + 0.2,
+                min(data_sorted["Pit Stop Min"]) - 0.2,
+                max(data_sorted["Pit Stop Min"]) + 0.2,
             ],
             title="Temps minimal de pit-stop par saison",
-            labels={"Pit Stop Max": "Temps pit-stop (secondes)", "year": "Année"},
+            labels={"Pit Stop Min": "Temps pit-stop (secondes)", "year": "Année"},
         )
         fig.update_layout(xaxis_tickangle=-45)
         return fig
 
     elif methode == "matplotlib":
         fig, ax = plt.subplots(figsize=(10, 5))
-        ax.bar(data_sorted["year"], data_sorted["Pit Stop Max"], color="#ff7f0e")
+        ax.bar(data_sorted["year"], data_sorted["Pit Stop Min"], color="#ff7f0e")
         ax.set_title("Temps minimal de pit-stop par saison")
         ax.set_xlabel("Année")
         ax.set_ylabel("Temps pit-stop (secondes)")
         ax.set_ylim(
             [
-                min(data_sorted["Pit Stop Max"]) - 0.2,
-                max(data_sorted["Pit Stop Max"]) + 0.2,
+                min(data_sorted["Pit Stop Min"]) - 0.2,
+                max(data_sorted["Pit Stop Min"]) + 0.2,
             ]
         )
         plt.tight_layout()

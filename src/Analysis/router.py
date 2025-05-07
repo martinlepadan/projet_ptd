@@ -11,7 +11,7 @@ def get_question(question_id):
         "q3": queries_pilotes.temps_de_carriere_pilotes,
         "q4": queries_ecuries.victoires_ecuries_saison,
         "q5": queries_pit_stops.pit_stop,
-        "q6": queries_pit_stops.max_pit_stop,
+        "q6": queries_pit_stops.min_pit_stop,
         "q7": queries_pilotes.statistiques_pilote,
         "q8": queries_ecuries.ecuriesPoints,
         "q10": queries_ecuries.victoiresEcuriesRelatif,
@@ -26,7 +26,7 @@ def get_graph(question_id):
         "q3": graphs_pilotes.plot_temps_de_carriere_pilotes,
         "q4": graphs_ecuries.plot_victoires_ecuries_saison,
         "q5": graphs_pit_stops.plot_temps_pit_stop,
-        "q6": graphs_pit_stops.plot_max_pit_stop,
+        "q6": graphs_pit_stops.plot_min_pit_stop,
         "q7": graphs_pilotes.plot_carriere_pilote,
         "q8": graphs_ecuries.plot_classement_saison_ecuries,
     }
