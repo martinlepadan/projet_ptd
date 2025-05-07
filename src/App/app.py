@@ -36,12 +36,13 @@ with tabs[0]:
             "q7": "Statistiques de carrière d'un pilote",
         },
         "Écuries": {
-            "q4": "Nombre de victoires par écurie par saison",
+            "q4": "Nombre de victoires par écurie et par saison",
             "q8": "Classement écuries par saison",
             "q10": "Dashboard écuries",
         },
         "Pit-Stops": {
             "q5": "Temps moyen de pit-stop par écurie",
+            "q6": "Temps de pit-stop minimal par saison",
         },
     }
 
@@ -53,6 +54,7 @@ with tabs[0]:
         "q3": "⏱️",
         "q4": "📈",
         "q5": "🔧",
+        "q6": "⏱️",
         "q7": "🧑‍💼",
         "q8": "🏆",
         "q10": "📊",
@@ -64,6 +66,7 @@ with tabs[0]:
         "q3": "Montre la durée de carrière de chaque pilote.",
         "q4": "Montre le nombre de victoires par écurie par saison.",
         "q5": "Compare le temps moyen des pit-stops par écurie.",
+        "q6": "Donne le meilleur pit-stop de chaque saison.",
         "q7": "Fournit un résumé statistique de la carrière d'un pilote.",
         "q8": "Affiche le classement final des écuries pour une saison donnée.",
         "q10": "Renvoie un dashboard avec 3 statistiques générales d'écuries.",
@@ -88,7 +91,7 @@ with tabs[0]:
                 plot_func = get_graph(question_label)
 
                 method = None
-                if question_label in ["q1", "q8", "q5", "q6", "q9"]:
+                if question_label in ["q1", "q5", "q8"]:
                     method = st.selectbox(
                         "⚙️ Méthode",
                         options=["pandas", "homemade"],

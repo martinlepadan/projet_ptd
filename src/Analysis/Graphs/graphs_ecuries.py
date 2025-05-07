@@ -5,43 +5,59 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 
 
-def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str) -> px.bar:
+def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str):
     """
-    Affiche un graphique empilé représentant le classement des écuries
-    triés par nombre de points décroissants.
+    Affiche un graphique représentant le classement des écuries
+    triées par nombre de points décroissants.
 
     Parameters
     ----------
     data : pd.DataFrame
-
+        Doit contenir au moins les colonnes ["constructorRef", "points"]
+    methode : str
+        "plotly" ou "matplotlib"
 
     Returns
     -------
-
+    fig : Figure Plotly ou Matplotlib
     """
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data)
 
-    data = data.sort_values("points", ascending=True)
+    data_sorted = data.sort_values("points", ascending=True)
 
     if methode == "plotly":
         fig = px.bar(
-            data,
+            data_sorted,
             x="points",
             y="constructorRef",
             orientation="h",
             title="Classement des écuries",
-            labels={"constructorRef": "Ecurie", "points ": "points"},
+            labels={"constructorRef": "Écurie", "points": "Points"},
             text_auto=True,
         )
-
         fig.update_layout(
             barmode="stack",
-            yaxis=dict(title="Ecuries"),
-            xaxis=dict(title="Total points"),
+            yaxis=dict(title="Écuries"),
+            xaxis=dict(title="Total de points"),
         )
-
         return fig
+
+    elif methode == "matplotlib":
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.barh(data_sorted["constructorRef"], data_sorted["points"], color="#9467bd")
+        ax.set_title("Classement des écuries")
+        ax.set_xlabel("Points")
+        ax.set_ylabel("Écurie")
+        for i, (points, ecurie) in enumerate(
+            zip(data_sorted["points"], data_sorted["constructorRef"])
+        ):
+            ax.text(points + 1, i, str(int(points)), va="center", fontsize=9)
+        plt.tight_layout()
+        return fig
+
+    else:
+        raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
 
 
 def plot_victoires_ecuries_saison(data: pd.DataFrame, methode: str = "plotly"):
