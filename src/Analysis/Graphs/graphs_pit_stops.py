@@ -1,4 +1,6 @@
-"""Fichier pour créer le graphe de la question sur les pit-stops"""
+"""
+Fichier pour créer le graphe de la question sur les pit-stops
+"""
 
 import pandas as pd
 import plotly.express as px
@@ -6,6 +8,20 @@ import matplotlib.pyplot as plt
 
 
 def plot_temps_pit_stop(data, methode: str):
+    """
+    Affiche un graphique des temps moyens de pit-stop par écurie.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Doit contenir les colonnes ["constructor_unifie", "pit_stop_moyen"].
+    methode : str
+        "plotly" ou "matplotlib".
+
+    Returns
+    -------
+    fig : Figure Plotly ou Matplotlib
+    """
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data)
 
@@ -55,9 +71,20 @@ def plot_temps_pit_stop(data, methode: str):
 
 
 def plot_min_pit_stop(data, methode: str):
-    if not isinstance(data, pd.DataFrame):
-        data = pd.DataFrame(data)
+    """
+    Affiche un graphique du pit-stop le plus rapide par saison.
 
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Doit contenir les colonnes ["year", "Pit Stop Min"].
+    methode : str
+        "plotly" ou "matplotlib".
+
+    Returns
+    -------
+    fig : Figure Plotly ou Matplotlib
+    """
     data_sorted = data.sort_values("Pit Stop Min", ascending=True)
 
     if methode == "plotly":

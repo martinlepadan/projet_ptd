@@ -3,6 +3,10 @@
 import streamlit as st
 import pandas as pd
 from src.Analysis.router import get_question, get_graph
+from src.Models.LogisticRegression.logistic_regression import compare_logistic
+from src.Models.LogisticRegression.graph import plot_confusion_matrix
+from src.Models.Classification.classification import clustering_pilotes
+from src.Models.Classification.graph import graph_classification
 import io
 
 
@@ -20,7 +24,7 @@ st.markdown(
 
 col1, col2, col3 = st.columns([2, 2, 2])
 with col2:
-    st.image("Red-Bull-Logo.png", width=400)
+    st.image("./src/App/assets/Red-Bull-Logo.png", width=400)
 
 st.markdown(
     """
@@ -31,7 +35,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tabs = st.tabs(["Requêtes", "Régression", "Réseau de Neurones"])
+tabs = st.tabs(["Requêtes", "Régression", "Classification", "Réseau de Neurones"])
 
 # ========== ONGLET 1 : REQUÊTES ========== #
 with tabs[0]:
@@ -47,7 +51,7 @@ with tabs[0]:
         "Écuries": {
             "q4": "Nombre de victoires par écurie et par saison",
             "q8": "Classement écuries par saison",
-            "q10": "Dashboard écuries",
+            "q9": "Dashboard écuries",
         },
         "Pit-Stops": {
             "q5": "Temps moyen de pit-stop par écurie par saison (2020-2023)",
@@ -61,11 +65,12 @@ with tabs[0]:
         "q1": "🏆",
         "q2": "📊",
         "q3": "⏱️",
+        "q4": "🏎️",
         "q5": "🔧",
         "q6": "⏱️",
         "q7": "🧑‍💼",
         "q8": "🏆",
-        "q10": "📊",
+        "q9": "📊",
     }
 
     descriptions = {
@@ -77,7 +82,7 @@ with tabs[0]:
         "q6": "Donne le meilleur pit-stop de chaque saison.",
         "q7": "Fournit un résumé statistique de la carrière d'un pilote.",
         "q8": "Affiche le classement final des écuries pour une saison donnée.",
-        "q10": "Renvoie un dashboard avec 3 statistiques générales d'écuries.",
+        "q9": "Renvoie un dashboard avec 3 statistiques générales d'écuries.",
     }
 
     for theme, questions in THEMES.items():
@@ -179,7 +184,7 @@ with tabs[0]:
                         value=2023,
                         key="slider-q8",
                     )
-                elif question_label == "q10":
+                elif question_label == "q9":
                     ecurie = pd.read_csv("data/constructors.csv")
                     ecurie_dispo = ecurie["name"].unique().tolist()
 
@@ -189,7 +194,7 @@ with tabs[0]:
                         key="select-ecurie",
                         index=167,
                     )
-                if question_label == "q10":
+                if question_label == "q9":
                     st.subheader("📊 Dashboard - Statistiques de l'écurie")
 
                     # Extraire les trois valeurs attendues du DataFrame
@@ -254,7 +259,7 @@ with tabs[0]:
                             icon=":material/download:",
                         )
 
-                        if plot_func is not False:
+                        if plot_func is not None:
                             st.subheader("📊 Visualisation")
 
                             methode_graph = st.radio(
@@ -334,8 +339,114 @@ with tabs[0]:
 
 # ========== ONGLET 2 : RÉGRESSION ========== #
 with tabs[1]:
-    st.header("📊 Modèle de Régression")
+    st.header("📊 Régression Logistique — Prédiction de podium")
 
-# ========== ONGLET 3 : RÉSEAU DE NEURONES ========== #
+    st.markdown(
+        """
+        Ce modèle de régression logistique a pour objectif de **prédire si un pilote va
+        terminer sur le podium (top 3)**
+        en se basant sur certaines caractéristiques comme sa position de départ,
+        l'écurie ou l'année.
+
+        ⚠️ Le jeu de données est fortement **déséquilibré** : la majorité des pilotes ne
+        finissent pas sur le podium.
+        C'est pourquoi nous comparons deux versions du modèle :
+
+        - Une version **non pondérée** (standard)
+        - Une version **pondérée avec l'option `class_weight="balanced"`**, qui corrige
+        le déséquilibre des classes
+
+        Cette comparaison permet de mieux comprendre l'impact de la pondération sur la
+        **précision globale** et sur la **capacité à bien détecter les podiums**.
+
+        ---
+        """
+    )
+
+    if "results" not in st.session_state:
+        if st.button("📈 Lancer et comparer les deux modèles"):
+            with st.spinner("En cours de traitement..."):
+                results = compare_logistic()
+                st.session_state["results"] = results
+
+    if "results" in st.session_state:
+        results = st.session_state["results"]
+
+        col1, col2 = st.columns(2)
+        for name, col, emoji in zip(
+            ["Non pondérée", "Pondérée"], [col1, col2], ["⚙️", "⚖️"]
+        ):
+            with col:
+                st.subheader(f"{emoji} {name}")
+                res = results[name]
+
+                st.metric(label="🎯 Accuracy", value=f"{res['accuracy']:.2%}")
+
+                report_df = pd.DataFrame(res["report"]).transpose().round(3)
+                report_df.rename(index={"0": "Pas podium", "1": "Podium"}, inplace=True)
+                st.dataframe(report_df.style.format("{:.3f}"), height=240)
+
+        st.markdown("---")
+        st.subheader("📊 Matrices de confusion (% par classe réelle)")
+        col1, col2 = st.columns(2)
+        for name, col in zip(["Non pondérée", "Pondérée"], [col1, col2]):
+            with col:
+                fig_cm = plot_confusion_matrix(
+                    results[name]["confusion_matrix"], ["Pas podium", "Podium"]
+                )
+                st.plotly_chart(fig_cm, use_container_width=True)
+
+        st.markdown(
+            """
+            ---
+
+            **💡 Interprétation** :
+            - Le modèle **non pondéré** a une meilleure accuracy globale car il prédit
+            principalement "Pas podium", ce qui fonctionne bien dans un jeu déséquilibré.
+            - Le modèle **avec `class_weight="balanced"`** se trompe moins sur les
+            podiums (rappel plus élevé), ce qui est souvent plus utile dans un contexte
+            où les podiums sont rares.
+            - La matrice de confusion montre que le modèle pondéré fait moins d'erreurs
+            sur les podiums, mais a plus de faux positifs (prédit podium alors que
+            ce n'est pas le cas).
+            """
+        )
+
+# ========== ONGLET 4 : ACP + K-MEANS ========== #
 with tabs[2]:
-    st.header("🧠 Prédictions par réseau de neurones")
+    st.header("🧠 Clustering des pilotes selon leur style de carrière")
+
+    st.markdown(
+        """
+        Cette analyse utilise un algorithme de **k-means** pour regrouper les pilotes en
+        fonction de leur carrière :
+        - Total de points
+        - Nombre de victoires
+        - Nombre de courses disputées
+        - Durée de carrière
+        - Moyenne de points par course
+
+        On utilise également une **ACP** (Analyse en Composantes Principales) pour
+        réduire la dimension à 2 axes et visualiser les groupes formés.
+
+        ---
+        """
+    )
+    n_clusters = st.slider(
+        "Nombre de groupes (clusters)", min_value=2, max_value=10, value=3
+    )
+
+    if st.button("Lancer le clustering"):
+        with st.spinner("Clustering en cours..."):
+            df_clustered, used_vars = clustering_pilotes(n_clusters=n_clusters)
+
+        st.success(f"{len(df_clustered)} pilotes analysés.")
+
+        st.dataframe(df_clustered[["nom_pilote", "cluster"] + used_vars])
+
+        fig = graph_classification(df_clustered)
+        st.plotly_chart(fig, use_container_width=True)
+
+# ========== ONGLET 4 : RÉSEAU DE NEURONES ========== #
+with tabs[3]:
+    st.header("🤖 Prédictions par réseau de neurones")
