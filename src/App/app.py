@@ -56,7 +56,7 @@ else:
     tabs = st.tabs(["Requêtes", "Régression", "Classification"])
 
 
-# ========== ONGLET 1 : REQUÊTES ========== #
+# ONGLET 1 : REQUÊTES
 with tabs[0]:
     st.header("🔍 Analyse par thématique")
 
@@ -218,7 +218,6 @@ with tabs[0]:
                 if question_label == "q9":
                     st.subheader("📊 Dashboard - Statistiques de l'écurie")
 
-                    # Extraire les trois valeurs attendues du DataFrame
                     total_victoires, nb_participations, moyenne_victoires = query_func(
                         method, **params
                     )
@@ -258,17 +257,10 @@ with tabs[0]:
                         df = query_func(**params)
                     st.session_state[f"df_{question_label}"] = df
 
-                    # Récupérer les données stockées
                     df = st.session_state.get(f"df_{question_label}")
 
                     if df is not None:
-                        st.markdown(
-                            """
-
-                            ---
-
-                            """
-                        )
+                        st.markdown("""---""")
                         st.markdown("### 📄 Données")
                         st.dataframe(df)
 
@@ -286,13 +278,7 @@ with tabs[0]:
                             key=f"csv-{question_label}",
                             icon=":material/download:",
                         )
-                        st.markdown(
-                            """
-
-                            ---
-
-                            """
-                        )
+                        st.markdown("""---""")
                         if plot_func is not None:
                             st.markdown("### 📊 Visualisation")
 
@@ -371,7 +357,7 @@ with tabs[0]:
                                     )
 
 
-# ========== ONGLET 2 : RÉGRESSION ========== #
+# ONGLET 2 : RÉGRESSION
 with tabs[1]:
     st.header("📊 Régression Logistique — Prédiction de podium")
 
@@ -446,7 +432,7 @@ with tabs[1]:
             """
         )
 
-# ========== ONGLET 3 : ACP + K-MEANS ========== #
+# ONGLET 3 : ACP + K-MEANS
 with tabs[2]:
     st.header("🧠 Clustering des pilotes selon leur style de carrière")
 
@@ -481,7 +467,7 @@ with tabs[2]:
         fig = graph_classification(df_clustered)
         st.plotly_chart(fig, use_container_width=True)
 
-# ========== ONGLET 4 : RÉSEAU DE NEURONES ========== #
+# ONGLET 4 : RÉSEAU DE NEURONES
 if bonus_mode:
     from src.Models.NeuralNetwork.train import train_model
 
@@ -681,7 +667,6 @@ if bonus_mode:
                             "📉 Dernière perte (train)", f"{train_losses[-1]:.4f}"
                         )
 
-                    # Vérifie si une accuracy existe (ie. classification)
                     has_accuracy = not all(np.isnan(train_accuracies))
 
                     if has_accuracy:
@@ -704,7 +689,6 @@ if bonus_mode:
                                     f"{acc*100:.2f}%",
                                 )
 
-                    # 📈 Affichage des métriques toutes les 10 époques
                     st.subheader("📊 Évolution des métriques (tous les 10 epochs)")
                     table_data = []
                     for epoch in range(0, len(train_losses), 10):
