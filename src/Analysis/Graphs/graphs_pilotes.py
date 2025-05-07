@@ -1,14 +1,27 @@
-"""Fichier pour créer les graphes pour chaque question concernant les pilotes"""
+"""
+Graphiques liés aux statistiques des pilotes de F1.
+"""
 
 import pandas as pd
-import plotly.express as px
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 
-def plot_nombre_victoires_pilotes(data, methode: str):
-    if not isinstance(data, pd.DataFrame):
-        data = pd.DataFrame(data)
+def plot_nombre_victoires_pilotes(data: pd.DataFrame, methode: str = "plotly"):
+    """
+    Affiche un histogramme des pilotes selon leur nombre de victoires.
 
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Doit contenir les colonnes ["nom_pilote", "wins"].
+    methode : str
+        "plotly" (par défaut) ou "matplotlib".
+
+    Returns
+    -------
+    fig : Figure Plotly ou Matplotlib
+    """
     data_sorted = data.sort_values("wins", ascending=False)
 
     if methode == "plotly":
@@ -32,14 +45,24 @@ def plot_nombre_victoires_pilotes(data, methode: str):
         plt.tight_layout()
         return fig
 
-    else:
-        raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
+    raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
 
 
-def plot_classement_saison(data: pd.DataFrame, methode: str):
-    if not isinstance(data, pd.DataFrame):
-        data = pd.DataFrame(data)
+def plot_classement_saison(data: pd.DataFrame, methode: str = "plotly"):
+    """
+    Affiche un graphique empilé des podiums (or, argent, bronze) pour chaque pilote.
 
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Doit contenir ["nom_pilote", "1", "2", "3", "points"].
+    methode : str
+        "plotly" ou "matplotlib".
+
+    Returns
+    -------
+    fig : Figure Plotly ou Matplotlib
+    """
     podium_cols = ["1", "2", "3"]
     data["total_podiums"] = data[podium_cols].sum(axis=1)
     data = data[data["total_podiums"] > 0].copy()
@@ -60,21 +83,17 @@ def plot_classement_saison(data: pd.DataFrame, methode: str):
             x="Nombre",
             y="Nom",
             color="Position",
+            orientation="h",
+            title="Nombre de podiums par pilote (or, argent, bronze)",
             color_discrete_map={
                 "Or": "#FFD700",
                 "Argent": "#C0C0C0",
                 "Bronze": "#CD7F32",
             },
-            orientation="h",
-            title="Nombre de podiums par pilote (or, argent, bronze)",
             labels={"Nom": "Pilote", "Nombre": "Podiums"},
             text_auto=True,
         )
-        fig.update_layout(
-            barmode="stack",
-            yaxis=dict(title="Pilote"),
-            xaxis=dict(title="Total podiums"),
-        )
+        fig.update_layout(barmode="stack", title_x=0.5)
         return fig
 
     elif methode == "matplotlib":
@@ -90,14 +109,24 @@ def plot_classement_saison(data: pd.DataFrame, methode: str):
         plt.tight_layout()
         return fig
 
-    else:
-        raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
+    raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
 
 
-def plot_temps_de_carriere_pilotes(data, methode: str):
-    if not isinstance(data, pd.DataFrame):
-        data = pd.DataFrame(data)
+def plot_temps_de_carriere_pilotes(data: pd.DataFrame, methode: str = "plotly"):
+    """
+    Affiche un graphique représentant la durée de carrière des pilotes.
 
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Doit contenir les colonnes ["nom_pilote", "duree"].
+    methode : str
+        "plotly" ou "matplotlib".
+
+    Returns
+    -------
+    fig : Figure Plotly ou Matplotlib
+    """
     data_sorted = data.sort_values("duree", ascending=False)
 
     if methode == "plotly":
@@ -121,11 +150,24 @@ def plot_temps_de_carriere_pilotes(data, methode: str):
         plt.tight_layout()
         return fig
 
-    else:
-        raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
+    raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
 
 
 def plot_carriere_pilote(df: pd.DataFrame, methode: str = "plotly"):
+    """
+    Affiche les statistiques détaillées (barres + camembert) pour un pilote unique.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Une seule ligne avec colonnes : nom_pilote, nb_podiums_1/2/3, nb_courses
+    methode : str
+        "plotly" ou "matplotlib"
+
+    Returns
+    -------
+    fig : Plotly (2) ou Matplotlib (1)
+    """
     pilot = df.iloc[0]["nom_pilote"]
     stats = {
         "🥇 Or (1er)": df.iloc[0]["nb_podiums_1"],
@@ -138,9 +180,9 @@ def plot_carriere_pilote(df: pd.DataFrame, methode: str = "plotly"):
     autres = total - podiums
 
     if methode == "plotly":
-        col1 = pd.DataFrame(list(stats.items()), columns=["Stat", "Valeur"])
+        df_barres = pd.DataFrame(stats.items(), columns=["Stat", "Valeur"])
         fig1 = px.bar(
-            col1,
+            df_barres,
             x="Valeur",
             y="Stat",
             orientation="h",
@@ -155,11 +197,11 @@ def plot_carriere_pilote(df: pd.DataFrame, methode: str = "plotly"):
         )
         fig1.update_layout(title_x=0.5, showlegend=False)
 
-        col2 = pd.DataFrame(
+        df_pie = pd.DataFrame(
             {"Catégorie": ["Podiums", "Autres"], "Valeur": [podiums, autres]}
         )
         fig2 = px.pie(
-            col2,
+            df_pie,
             values="Valeur",
             names="Catégorie",
             title=f"Ratio podiums / autres pour {pilot}",
@@ -172,7 +214,7 @@ def plot_carriere_pilote(df: pd.DataFrame, methode: str = "plotly"):
     elif methode == "matplotlib":
         fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-        # Barres
+        # Barres horizontales
         labels = list(stats.keys())
         values = list(stats.values())
         colors = ["#FFD700", "#C0C0C0", "#CD7F32", "#7f7f7f"]
@@ -197,5 +239,4 @@ def plot_carriere_pilote(df: pd.DataFrame, methode: str = "plotly"):
         plt.tight_layout()
         return fig
 
-    else:
-        raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
+    raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
