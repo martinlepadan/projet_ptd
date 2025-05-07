@@ -125,7 +125,7 @@ with tabs[0]:
                 plot_func = get_graph(question_label)
 
                 method = None
-                if question_label in ["q1", "q5", "q9"]:
+                if question_label in ["q1", "q6", "q10"]:
                     method = st.selectbox(
                         "⚙️ Méthode",
                         options=["pandas", "homemade"],
