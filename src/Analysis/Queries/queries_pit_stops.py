@@ -5,7 +5,7 @@ import pandas as pd
 
 
 # Temps moyen de pit stop par écurie en 2020
-def pit_stop(method: str, saison = 2020) -> pd.DataFrame:
+def pit_stop(method: str, saison=2020) -> pd.DataFrame:
 
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
@@ -64,5 +64,6 @@ def pit_stop(method: str, saison = 2020) -> pd.DataFrame:
         )
 
         return df_final
+
 
 pit_stop("pandas")
