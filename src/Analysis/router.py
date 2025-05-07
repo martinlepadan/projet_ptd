@@ -9,7 +9,7 @@ def get_question(question_id):
         "q1": queries_pilotes.nombre_victoires_pilotes,
         "q2": queries_pilotes.classement_saison,
         "q3": queries_pilotes.temps_de_carriere_pilotes,
-        "q4": queries_ecuries.ecuriesPoints,
+        "q4": queries_ecuries.victoires_ecuries_saison,
         "q5": queries_pit_stops.pit_stop,
         "q7": queries_pilotes.statistiques_pilote,
         "q8": queries_ecuries.ecuriesPoints,

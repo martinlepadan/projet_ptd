@@ -39,26 +39,52 @@ def ecuriesPoints(method: str, saison: int) -> pd.DataFrame:
 # Nombre de victoires par écuries :
 
 
-def victoiresEcuries(method: str, ecurie: str, saison: int) -> pd.DataFrame:
+def victoires_ecuries_saison(ecuries: list[str], saisons: list[int]) -> pd.DataFrame:
+    """
+    Calcule le nombre de victoires d'une ou plusieurs écuries pour chaque saison donnée.
 
-    if method not in ["pandas", "homemade"]:
-        raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
+    Parameters
+    ----------
+    method : str
+        "pandas" ou "homemade"
+    ecuries : list[str]
+        Liste des noms d'écuries à inclure
+    saisons : list[int]
+        Liste de début et de fin de saison
 
-    if method == "pandas":
+    Returns
+    -------
+    pd.DataFrame
+        Colonnes : ["ecurie", "saison", "victoires"]
+    """
 
-        df = get_pd_df(
-            ["constructor_standings", "constructors", "races"],
-            ["constructorId", "raceId"],
-        )
+    if not isinstance(ecuries, list) or not all(isinstance(e, str) for e in ecuries):
+        raise ValueError("ecuries doit être une liste de chaînes de caractères")
 
-        df = df.loc[(df["name_x"] == ecurie) & (df["year"] == saison)]
+    df = get_pd_df(
+        ["constructor_standings", "constructors", "races"],
+        ["constructorId", "raceId"],
+    )
 
-        df = df.loc[df["position"] == 1]
+    # Filtrer selon la saison et les écuries
+    df = df[
+        (df["year"] >= saisons[0])
+        & (df["year"] <= saisons[1])
+        & (df["name_x"].isin(ecuries))
+        & (df["position"] == 1)
+    ]
 
-        """ print(f"Nombre de victoire de l'écurie {ecurie} lors de la saison {saison} :")
-        print(df.shape[0]) """
+    # Compter les victoires par écurie et saison
+    grouped = (
+        df.groupby(["name_x", "year"])
+        .size()
+        .reset_index(name="victoires")
+        .rename(columns={"name_x": "ecurie", "year": "saison"})
+        .sort_values(["ecurie", "saison"])
+        .reset_index(drop=True)
+    )
 
-        return df.shape[0]
+    return grouped
 
 
 # Nombre de victoires par écurie en absolue + en relatif + nbr de saisons participées :
