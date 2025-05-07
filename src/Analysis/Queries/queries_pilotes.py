@@ -1,53 +1,44 @@
-"""Fichier avec les différentes requêtes relatives aux pilotes."""
+"""
+Requêtes relatives aux statistiques des pilotes de F1.
+"""
 
-from src.Analysis.utils import get_pd_df, get_python_df
+from src.Analysis.utils import get_pd_df, get_python_df, points_bareme
 import pandas as pd
 
 
-# Barème de points FIA (valable pour la plupart des saisons modernes)
-points_bareme = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}
-
-
-# Nombre de courses gagnées par pilote :
 def nombre_victoires_pilotes(method: str, nb_victoires: int = 30) -> pd.DataFrame:
     """
-    Calcule le nombre total de victoires (positionText == '1') par pilote,
-    puis filtre ceux avec au moins `nb_victoires`.
+    Calcule le nombre total de victoires (positionText == '1') par pilote.
+
+    Parameters
+    ----------
+    method : str
+        "pandas" ou "homemade"
+    nb_victoires : int
+        Nombre minimum de victoires pour apparaître dans le tableau.
 
     Returns
     -------
-    pd.DataFrame : Colonnes ["nom_pilote", "wins"] trié décroissant
+    pd.DataFrame
+        Colonnes ["nom_pilote", "wins"], trié par nombre de victoires décroissant.
     """
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
 
     if method == "pandas":
         df = get_pd_df(["drivers", "results"], ["driverId"])
-
         df["nom_pilote"] = df["forename"] + " " + df["surname"]
-
-        # Filtrer les victoires
         df_victoires = df[df["positionText"] == "1"]
-
-        # Compter les victoires par pilote
         total_victoires = (
             df_victoires.groupby("nom_pilote").size().reset_index(name="wins")
         )
-
-        # Filtrer selon seuil
         total_victoires = total_victoires[total_victoires["wins"] >= nb_victoires]
-
-        # Tri décroissant
-        total_victoires = total_victoires.sort_values(
-            "wins", ascending=False
-        ).reset_index(drop=True)
-
-        return total_victoires
+        return total_victoires.sort_values("wins", ascending=False).reset_index(
+            drop=True
+        )
 
     else:
-        # Version homemade
         df = get_python_df(["drivers", "results"], ["driverId"])
-
         noms = [f"{prenom} {nom}" for prenom, nom in zip(df["forename"], df["surname"])]
         positions = df["positionText"]
 
@@ -58,7 +49,6 @@ def nombre_victoires_pilotes(method: str, nb_victoires: int = 30) -> pd.DataFram
 
         filtered = {n: v for n, v in total_victoires.items() if v >= nb_victoires}
         sorted_list = sorted(filtered.items(), key=lambda x: (-x[1], x[0]))
-
         return pd.DataFrame(sorted_list, columns=["nom_pilote", "wins"])
 
 
@@ -76,15 +66,9 @@ def classement_saison(saison: int = 2023) -> pd.DataFrame:
         - colonnes "1", "2", "3", ... : nombre de positions obtenues
         - pts_par_course : ratio points / total de participations
     """
-    # Fusion des données drivers + results + races
+
     df = get_pd_df(["drivers", "driver_standings", "races"], ["driverId", "raceId"])
-
-    # Filtrage par saison
-    df = df[df["year"] == saison].copy()
-
-    print(df.head())
-
-    # Créer le nom complet du pilote
+    df = df[df["year"] == saison]
     df["nom_pilote"] = df["forename"] + " " + df["surname"]
 
     # Garder les lignes avec position valide (entier positif)
@@ -93,10 +77,6 @@ def classement_saison(saison: int = 2023) -> pd.DataFrame:
 
     # Appliquer le barème de points
     df["points"] = df["position"].apply(lambda p: points_bareme.get(p, 0))
-
-    print(df["points"])
-
-    # Points totaux par pilote
     df_points = df.groupby("nom_pilote")["points"].sum().to_frame()
 
     # Comptage des positions 1, 2, 3, etc.
@@ -124,66 +104,54 @@ def classement_saison(saison: int = 2023) -> pd.DataFrame:
     return df_final.reset_index()
 
 
-def temps_de_carriere_pilotes(duree_min: int) -> pd.DataFrame:
+def temps_de_carriere_pilotes(duree_min: int = 5) -> pd.DataFrame:
     """
-    Calcule le temps de carrière de chaque pilote
+    Calcule la durée de carrière des pilotes à partir de leur première
+    et dernière saison.
+
+    Parameters
+    ----------
+    duree_min : int
+        Nombre d'années minimum de carrière.
 
     Returns
     -------
     pd.DataFrame
-        Contient :
-        - nom_pilote
-        - debut : première année de participation
-        - fin : dernière année de participation
-        - duree : durée de carrière en années
+        Colonnes : nom_pilote, debut, fin, duree
     """
-
-    # Fusion des données nécessaires : standings + drivers + races
     df = get_pd_df(["driver_standings", "drivers", "races"], ["driverId", "raceId"])
-
-    # Création du nom complet
     df["nom_pilote"] = df["forename"] + " " + df["surname"]
 
-    # Groupe par pilote pour calculer début et fin
     carriere = (
         df.groupby("nom_pilote")["year"].agg(debut="min", fin="max").reset_index()
     )
-
-    # Calcul de la durée de carrière (inclusif)
     carriere["duree"] = carriere["fin"] - carriere["debut"] + 1
 
-    # Tri par durée décroissante
-    carriere = carriere.sort_values("duree", ascending=False).reset_index(drop=True)
-
-    carriere = carriere[carriere["duree"] >= duree_min].copy()
-
-    return carriere
+    return (
+        carriere[carriere["duree"] >= duree_min]
+        .sort_values("duree", ascending=False)
+        .reset_index(drop=True)
+    )
 
 
 def statistiques_pilote(nom_pilote: str) -> pd.DataFrame:
     """
-    Donne les statistiques d'un pilote :
-    - nombre de courses
-    - nombre de podiums (1er, 2e, 3e)
-    - durée de carrière
+    Donne un résumé des performances d'un pilote.
 
     Parameters
     ----------
     nom_pilote : str
-        Nom complet du pilote (ex: "Max Verstappen")
+        Nom complet du pilote (ex : "Lewis Hamilton").
 
     Returns
     -------
     pd.DataFrame
-        Une ligne avec les colonnes :
-        - nom_pilote, nb_courses, nb_podiums_1, nb_podiums_2, nb_podiums_3
-        - debut (année), fin (année), duree_carriere
+        Une ligne avec : nb_courses, nb_podiums_1, nb_podiums_2, nb_podiums_3,
+        debut, fin, duree_carriere
     """
-
     df = get_pd_df(["drivers", "results", "races"], ["driverId", "raceId"])
     df["nom_pilote"] = df["forename"] + " " + df["surname"]
 
-    # Filtrer le pilote choisi
     df_pilote = df[df["nom_pilote"] == nom_pilote].copy()
 
     if df_pilote.empty:
@@ -192,27 +160,15 @@ def statistiques_pilote(nom_pilote: str) -> pd.DataFrame:
     nb_courses = len(df_pilote)
     podiums = df_pilote["position"].astype(str)
 
-    nb_1 = (podiums == "1").sum()
-    nb_2 = (podiums == "2").sum()
-    nb_3 = (podiums == "3").sum()
+    stats = {
+        "nom_pilote": nom_pilote,
+        "nb_courses": nb_courses,
+        "nb_podiums_1": (podiums == "1").sum(),
+        "nb_podiums_2": (podiums == "2").sum(),
+        "nb_podiums_3": (podiums == "3").sum(),
+        "debut": df_pilote["year"].min(),
+        "fin": df_pilote["year"].max(),
+    }
+    stats["duree_carriere"] = stats["fin"] - stats["debut"] + 1
 
-    debut = df_pilote["year"].min()
-    fin = df_pilote["year"].max()
-    duree = fin - debut + 1
-
-    stats = pd.DataFrame(
-        [
-            {
-                "nom_pilote": nom_pilote,
-                "nb_courses": nb_courses,
-                "nb_podiums_1": nb_1,
-                "nb_podiums_2": nb_2,
-                "nb_podiums_3": nb_3,
-                "debut": debut,
-                "fin": fin,
-                "duree_carriere": duree,
-            }
-        ]
-    )
-
-    return stats
+    return pd.DataFrame([stats])

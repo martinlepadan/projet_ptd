@@ -1,28 +1,29 @@
-"""Fichier pour créer les graphes pour chaque question concernant les écuries"""
+"""
+Graphiques liés aux statistiques des écuries de F1.
+"""
 
 import pandas as pd
-import plotly.express as px
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 
-def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str):
+def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str = "plotly"):
     """
-    Affiche un graphique représentant le classement des écuries
-    triées par nombre de points décroissants.
+    Affiche le classement des écuries pour une saison donnée.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Doit contenir au moins les colonnes ["constructorRef", "points"]
+        Contient les colonnes ["constructorRef", "points"].
     methode : str
-        "plotly" ou "matplotlib"
+        "plotly" (par défaut) ou "matplotlib".
 
     Returns
     -------
     fig : Figure Plotly ou Matplotlib
     """
     if not isinstance(data, pd.DataFrame):
-        data = pd.DataFrame(data)
+        raise TypeError("Les données doivent être un DataFrame pandas.")
 
     data_sorted = data.sort_values("points", ascending=True)
 
@@ -36,11 +37,7 @@ def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str):
             labels={"constructorRef": "Écurie", "points": "Points"},
             text_auto=True,
         )
-        fig.update_layout(
-            barmode="stack",
-            yaxis=dict(title="Écuries"),
-            xaxis=dict(title="Total de points"),
-        )
+        fig.update_layout(barmode="stack", title_x=0.5)
         return fig
 
     elif methode == "matplotlib":
@@ -56,28 +53,26 @@ def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str):
         plt.tight_layout()
         return fig
 
-    else:
-        raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
+    raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'.")
 
 
 def plot_victoires_ecuries_saison(data: pd.DataFrame, methode: str = "plotly"):
     """
-    Affiche un graphique en ligne représentant le nombre de victoires par saison
-    pour chaque écurie sélectionnée.
+    Affiche l'évolution du nombre de victoires par écurie et par saison.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Données avec les colonnes ["ecurie", "saison", "victoires"]
+        Doit contenir les colonnes ["ecurie", "saison", "victoires"].
     methode : str
-        "plotly" ou "matplotlib"
+        "plotly" (par défaut) ou "matplotlib".
 
     Returns
     -------
-    Figure Plotly ou Matplotlib
+    fig : Figure Plotly ou Matplotlib
     """
     if not isinstance(data, pd.DataFrame):
-        data = pd.DataFrame(data)
+        raise TypeError("Les données doivent être un DataFrame pandas.")
 
     if methode == "plotly":
         fig = px.line(
@@ -111,5 +106,4 @@ def plot_victoires_ecuries_saison(data: pd.DataFrame, methode: str = "plotly"):
         plt.tight_layout()
         return fig
 
-    else:
-        raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'")
+    raise ValueError("La méthode doit être 'plotly' ou 'matplotlib'.")

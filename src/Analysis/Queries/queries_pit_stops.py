@@ -69,8 +69,8 @@ def pit_stop(method: str, saison=2020) -> pd.DataFrame:
         pass
 
 
-def max_pit_stop() -> pd.DataFrame:
-    """Renvoie le temps de pit stop maximum par saison."""
+def min_pit_stop() -> pd.DataFrame:
+    """Renvoie le temps de pit stop minimum par saison."""
 
     df = get_pd_df(["pit_stops", "races"], ["raceId"])
 
@@ -80,7 +80,7 @@ def max_pit_stop() -> pd.DataFrame:
         df.groupby("year")["secondes"]
         .min()
         .reset_index()
-        .rename(columns={"secondes": "Pit Stop Max"})
+        .rename(columns={"secondes": "Pit Stop Min"})
         .sort_values("year")
         .reset_index(drop=True)
     )

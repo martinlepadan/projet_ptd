@@ -1,10 +1,12 @@
-"""Fichier principal"""
+"""
+Fichier principal
+"""
 
 import subprocess
 import os
 import sys
 
-REQUIRED_PACKAGES = ["pandas", "numpy", "scikit-learn", "streamlit", "plotly"]
+REQUIRED_PACKAGES = ["pandas", "numpy", "sklearn", "streamlit", "plotly"]
 
 
 def check_and_install_packages():

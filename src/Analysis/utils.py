@@ -1,4 +1,6 @@
-"""Fichier contenant des fonctions transversales (je fais genre je connais des mots)."""
+"""
+Fichier contenant des fonctions et variables transversales
+"""
 
 import os
 import pandas as pd
@@ -189,3 +191,7 @@ def get_python_df(dfs: list, keys: str | list) -> dict[str, list]:
     data = rows_to_dict(row_merged)
 
     return data
+
+
+# Barème de points FIA (valable pour la plupart des saisons modernes)
+points_bareme = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}
