@@ -91,13 +91,13 @@ def victoires_ecuries_saison(ecuries: list[str], saisons: list[int]) -> pd.DataF
 
 
 def victoiresEcuriesRelatif(method: str, ecurie: str) -> pd.DataFrame:
-    
+
     if method not in ["pandas", "homemade"]:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
 
     if method == "pandas":
-    
-    # On créé le dataframe correspondant au nombre de victoires totale de l'écurie :
+
+        # On créé le dataframe correspondant au nombre de victoires totale de l'écurie :
 
         df = get_pd_df(
             ["constructor_standings", "constructors", "races"],
@@ -131,29 +131,31 @@ def victoiresEcuriesRelatif(method: str, ecurie: str) -> pd.DataFrame:
 
     else:
         # Dataframe 1 (nombre total de victoires) :
-        df = get_python_df(["constructor_standings", "constructors", "races"],
-            ["constructorId", "raceId"])
-        
+        df = get_python_df(
+            ["constructor_standings", "constructors", "races"],
+            ["constructorId", "raceId"],
+        )
+
         # On transforme le dict de colonnes en liste de lignes
         rows = [dict(zip(df.keys(), values)) for values in zip(*df.values())]
-        
+
         # Filtrage des lignes par écurie et position = 1
         rows = [row for row in rows if row["name"] == ecurie]
         rows = [row for row in rows if row["position"] == "1"]
-        
+
         nbrWins = len(rows)
-        
+
         # Dataframe 2 (nombre total de participation à une saison) :
         df2 = get_python_df(
             ["constructor_standings", "constructors", "races"],
             ["constructorId", "raceId"],
         )
         rows2 = [dict(zip(df2.keys(), values)) for values in zip(*df2.values())]
-        
+
         rows2 = [row for row in rows2 if row["name"] == ecurie]
-        
+
         nbrParticipation = len(set(row["year"] for row in rows2))
-        
+
         if nbrParticipation == 0:
             moyenne = "Données manquantes"
         else:

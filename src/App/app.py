@@ -14,7 +14,9 @@ st.markdown(
         font-size: 1.2rem;
         }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 col1, col2, col3 = st.columns([2, 2, 2])
 with col2:
@@ -26,7 +28,7 @@ st.markdown(
         Red Bull Project
     </h1>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 tabs = st.tabs(["Requêtes", "Régression", "Réseau de Neurones"])
@@ -49,7 +51,7 @@ with tabs[0]:
         },
         "Pit-Stops": {
             "q5": "Temps moyen de pit-stop par écurie par saison (2020-2023)",
-            "q6": "Temps de pit-stop minimal par saison"
+            "q6": "Temps de pit-stop minimal par saison",
         },
     }
 
