@@ -15,7 +15,7 @@ def test_red_bull_points_2023():
     assert abs(top["points"] - 800) <= 30
 
 
-def test_mercedes_domination_2016():
+def test_mercedes_points_2016():
     """
     Mercedes a remporté plus de 700 points en 2016.
     """

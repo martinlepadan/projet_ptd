@@ -1,6 +1,6 @@
-# 🏁 Projet F1 — Analyse et Modélisation de Données de Formule 1
+# 🏁 Projet Red Bull - Analyse de données F1
 
-Bienvenue dans ce projet de visualisation, d'analyse statistique et de modélisation autour des données de Formule 1. Cette application interactive est développée en **Python** avec **Streamlit**, et permet d'explorer différentes facettes de la F1 à travers des requêtes, une régression logistique, un réseau de neurones et un clustering.
+Bienvenue dans ce projet de visualisation, d'analyse statistique et de modélisation autour des données de Formule 1. Cette application interactive est développée en **Python** avec **Streamlit**. Elle permet d'explorer ce jeu de données de différentes manières à l'aide d'outils d'apprentissages supervisés et non supervisé, ainsi que de représentations graphiques.
 
 ---
 
@@ -11,8 +11,9 @@ Bienvenue dans ce projet de visualisation, d'analyse statistique et de modélisa
 - Classements de saisons
 - Statistiques de carrière
 - Temps de pit-stops
+- Sauvegade des graphes et données possible
 
-### 🤖 Modèle supervisé : Régression logistique
+### 📊 Modèle supervisé : Régression logistique
 - Prédiction d’un podium à partir de données de course
 - Comparaison avec/sans `class_weight="balanced"`
 - Visualisations interactives (matrice de confusion, importance des variables)
@@ -22,21 +23,25 @@ Bienvenue dans ce projet de visualisation, d'analyse statistique et de modélisa
 - ACP (Analyse en Composantes Principales) pour la réduction de dimension
 - Visualisation des groupes formés avec Plotly
 
+### 🤖 Modèle supervisé : Réseaux de neurones
+- Création de son propre réseau de neurones
+- Visualisation des résultats par époch
+- Totalement optionnel
 ---
 
-## 🛠️ Installation
+## 🛠️ Installation et lancement
 
 ### 1. Cloner le dépôt
 
 ```bash
 git clone https://github.com/martinlepadan/projet_ptd.git
-cd projet_ptd_
+cd projet_ptd
 ```
 
-## ▶️ Lancer l'application
+### 2. Lancer l'application
 
 ```bash
-python src/__main__.py
+python __main__.py
 ```
 > [!NOTE]
 > Le script vérifie automatiquement que tous les packages nécessaires sont bien installés
@@ -100,6 +105,10 @@ projet_traitement/
 
 ```
 
+## 📢 Remarques
+- Les graphes/dataframes des requêtes pit-stops peuvent mettre un peu de temps à s'afficher et à s'actualiser.
+- Si vous voulez télécharger le graphe associé à une requête, choisissez l'option `matplotlib`. Si vous préférez l'interactvité et l'intégration, choisissez l'option `plotly`.
+- Si vous réalisez des réseaux de neurones, ne mettez pas d'hyperparamètres trop lourds (nombre de couche, neurones). Il s'entraîne sur votre machine et n'est pas du tout optimisé, le but étant surtout de le rendre personnalisable.
 ---
 
 ## 📦 Librairies utilisées
@@ -109,6 +118,5 @@ projet_traitement/
 - `plotly` — graphiques interactifs
 - `streamlit` — application web interactive
 - `matplotlib`  — visualisation statique
-- `numpy`
-
+- `pytorch` — réseaux de neurones
 ---

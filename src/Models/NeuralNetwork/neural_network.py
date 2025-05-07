@@ -4,6 +4,24 @@ from torch.utils.data import Dataset
 
 
 class CustomNN(nn.Module):
+    """
+    Implémentation d'un réseau de neurones complètement personnalisable.
+
+    Parameters
+    ----------
+        n_var (int): Nombre de variables en entrée (dimension de l'entrée).
+        layers_params (list[int]): Liste contenant le nombre de neurones pour chaque
+        couche cachée
+        dropout (float, optional): Taux de dropout à appliquer après chaque couche
+        cachée
+        num_classes (int, optional): Nombre de classes en sortie (dimension de la sortie)
+
+    Methodes
+    --------
+        forward(x: torch.Tensor) -> torch.Tensor:
+            Effectue une forward propagation
+    """
+
     def __init__(
         self,
         n_var: int,
@@ -50,6 +68,33 @@ class CustomNN(nn.Module):
 
 
 class F1Dataset(Dataset):
+    """
+    Dataset personnalisé pour gérer des données catégoriques et numériques
+
+    Parameters
+    ----------
+        categorical_data (list): Données catégoriques sous forme de liste ou tableau
+        cat_nclasses (list): Liste contenant le nombre de classes pour chaque
+                             colonne catégorique
+        num_data (list ou ndarray): Données numériques sous forme de liste ou tableau
+        targets (list ou ndarray): Cibles associées aux données
+
+    Attributes
+    ----------
+        targets (torch.Tensor): Tenseur contenant les cibles
+        categorical_data (torch.Tensor): Tenseur contenant les données catégoriques
+        cat_nclasses (list): Liste contenant le nombre de classes pour chaque
+                             colonne catégorique
+        num_data (torch.Tensor): Tenseur contenant les données numériques
+        onehot_data (torch.Tensor): Tenseur contenant les données catégoriques encodées
+        data (torch.Tensor): Tenseur combinant toutes les données
+
+    Methodes
+    --------
+        _categorical_to_onehot(col, nclass):
+            Convertit une colonne catégorique en rone hot
+    """
+
     def __init__(self, categorical_data, cat_nclasses, num_data, targets) -> None:
         if not isinstance(cat_nclasses, list):
             raise TypeError("cat_nclasses doit être une liste d'entiers")
