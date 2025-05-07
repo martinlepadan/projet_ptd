@@ -125,7 +125,7 @@ with tabs[0]:
                 plot_func = get_graph(question_label)
 
                 method = None
-                if question_label in ["q1", "q6", "q10"]:
+                if question_label in ["q1", "q6", "q9"]:
                     method = st.selectbox(
                         "⚙️ Méthode",
                         options=["pandas", "homemade"],
@@ -675,27 +675,34 @@ if bonus_mode:
 
                     st.success("🎉 Entraînement terminé avec succès !")
 
-                    # ✅ Récapitulatif final
                     st.subheader("📋 Récapitulatif des dernières métriques")
                     if len(train_losses) > 0:
                         st.metric(
                             "📉 Dernière perte (train)", f"{train_losses[-1]:.4f}"
                         )
-                    if not all(np.isnan(train_accuracies)):
+
+                    # Vérifie si une accuracy existe (ie. classification)
+                    has_accuracy = not all(np.isnan(train_accuracies))
+
+                    if has_accuracy:
                         st.metric(
                             "✅ Dernière accuracy (train)",
                             f"{train_accuracies[-1]*100:.2f}%",
                         )
+
                     if test_metrics:
                         last_epoch = max(test_metrics.keys())
                         st.metric(
                             "🧪 Perte test (dernier point)",
                             f"{test_metrics[last_epoch]['loss']:.4f}",
                         )
-                        st.metric(
-                            "🧪 Accuracy test (dernier point)",
-                            f"{test_metrics[last_epoch]['accuracy']*100:.2f}%",
-                        )
+                        if has_accuracy and "accuracy" in test_metrics[last_epoch]:
+                            acc = test_metrics[last_epoch]["accuracy"]
+                            if not np.isnan(acc):
+                                st.metric(
+                                    "🧪 Accuracy test (dernier point)",
+                                    f"{acc*100:.2f}%",
+                                )
 
                     # 📈 Affichage des métriques toutes les 10 époques
                     st.subheader("📊 Évolution des métriques (tous les 10 epochs)")
@@ -709,23 +716,23 @@ if bonus_mode:
                             else np.nan
                         )
                         test = test_metrics.get(ep, {})
-                        table_data.append(
-                            {
-                                "Époch": ep,
-                                "Loss (train)": round(t_loss, 4),
-                                "Accuracy (train)": (
-                                    round(t_acc * 100, 2)
-                                    if not np.isnan(t_acc)
-                                    else "N/A"
-                                ),
-                                "Loss (test)": round(test.get("loss", np.nan), 4),
-                                "Accuracy (test)": (
-                                    round(test.get("accuracy", np.nan) * 100, 2)
-                                    if "accuracy" in test
-                                    else "N/A"
-                                ),
-                            }
-                        )
+                        row = {
+                            "Époch": ep,
+                            "Loss (train)": round(t_loss, 4),
+                            "Loss (test)": round(test.get("loss", np.nan), 4),
+                        }
+
+                        if has_accuracy:
+                            row["Accuracy (train)"] = (
+                                round(t_acc * 100, 2) if not np.isnan(t_acc) else "—"
+                            )
+                            row["Accuracy (test)"] = (
+                                round(test["accuracy"] * 100, 2)
+                                if "accuracy" in test and not np.isnan(test["accuracy"])
+                                else "—"
+                            )
+
+                        table_data.append(row)
 
                     st.dataframe(table_data, use_container_width=True)
 
@@ -733,10 +740,14 @@ if bonus_mode:
                     fig_loss = plot_loss_curves(train_losses, test_metrics)
                     st.pyplot(fig_loss)
 
-                    st.subheader("📈 Courbes d'accuracy (Train & Test)")
-                    fig_acc = plot_accuracy_curves(train_accuracies, test_metrics)
-                    st.pyplot(fig_acc)
-
+                    if has_accuracy:
+                        st.subheader("📈 Courbes d'accuracy (Train & Test)")
+                        fig_acc = plot_accuracy_curves(train_accuracies, test_metrics)
+                        st.pyplot(fig_acc)
+                    else:
+                        st.info(
+                            "ℹ️ Pas de courbe d'accuracy — tâche de régression détectée."
+                        )
                 except Exception as e:
                     st.error(f"❌ Une erreur est survenue : {e}")
 

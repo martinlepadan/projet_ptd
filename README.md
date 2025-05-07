@@ -94,9 +94,9 @@ projet_traitement/
 │           ├── graphs.py
 │           ├── neural_network.py
 │           └── train.py
-├── test/
-│   ├── test_ecuries.py
-│   └── test_pilotes.py
+└── test/
+    ├── test_ecuries.py
+    └── test_pilotes.py
 
 ```
 

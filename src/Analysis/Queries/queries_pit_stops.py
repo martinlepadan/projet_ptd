@@ -1,9 +1,12 @@
-"""Fichier avec les différentes requêtes relatives aux pit stops."""
+"""
+Requêtes pit stops
+"""
 
 from src.Analysis.utils import get_pd_df, get_python_df
 import pandas as pd
 
-constructor_merge_dict = {
+# Dictionnaire de correspondance pour uniformiser les noms des écuries
+constructor_merge_dict: dict[str, str] = {
     "force_india": "Aston Martin",
     "racing_point": "Aston Martin",
     "aston_martin": "Aston Martin",
@@ -28,59 +31,67 @@ constructor_merge_dict = {
 }
 
 
-# Temps moyen de pit stop par écurie en 2020
-def pit_stop(method: str, saison=2020) -> pd.DataFrame:
+def pit_stop(saison: int = 2020) -> pd.DataFrame:
+    """
+    Calcule le temps moyen de pit stop par écurie pour une saison donnée.
 
-    if method not in ["pandas", "homemade"]:
+    Parameters
+    ----------
+    saison : int, optional
+        Année de la saison (default: 2020).
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame contenant les écuries et leur temps moyen de pit stop en secondes.
+    """
+
+    df = get_pd_df(
+        ["pit_stops", "races", "results", "constructors"],
+        ["raceId", "driverId", "constructorId"],
+    )
+
+    df = df[df["year"] == saison]
+    df = df[df["milliseconds_x"] <= 300000]  # Filtrage valeurs aberrantes
+
+    df["secondes"] = round(df["milliseconds_x"] / 1000, 3)
+    df["constructor_unifie"] = df["constructorRef"].replace(constructor_merge_dict)
+    df = df[~df["constructorRef"].isin(["hrt", "manor"])]
+
+    df_final = (
+        df.groupby("constructor_unifie")["secondes"]
+        .mean()
+        .reset_index()
+        .rename(columns={"secondes": "pit_stop_moyen"})
+        .sort_values("pit_stop_moyen")
+        .reset_index(drop=True)
+    )
+
+    return df_final
+
+
+def min_pit_stop(method: str) -> pd.DataFrame:
+    """
+    Renvoie le temps de pit stop minimal par saison.
+
+    Parameters
+    ----------
+    method : str
+        Méthode à utiliser : "pandas" ou "homemade".
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame contenant le temps de pit stop minimal pour chaque saison.
+    """
+    if method not in {"pandas", "homemade"}:
         raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
 
     if method == "pandas":
-
-        df = get_pd_df(
-            ["pit_stops", "races", "results", "constructors"],
-            ["raceId", "driverId", "constructorId"],
-        )
-
-        # On filtre selon l'année de la saison
-        df = df.drop(df[df.year != saison].index)
-
-        # On supprime les valeurs abberantes
-        df = df.drop(df[df.milliseconds_x > 300000].index)
-        df["secondes"] = round(df.milliseconds_x / 1000, 3)
-
-        df["constructor_unifie"] = df["constructorRef"].replace(constructor_merge_dict)
-
-        # On supprime les écuries qui n'existent plus
-        df = df[~df["constructorRef"].isin(["hrt", "manor"])]
-
-        # Calcul du temps de pit stop moyen par écurie
-        df_final = (
-            df.groupby("constructor_unifie")["secondes"]
-            .mean()
-            .reset_index()
-            .rename(columns={"secondes": "pit_stop_moyen"})
-            .sort_values("pit_stop_moyen")
-            .reset_index(drop=True)
-        )
-
-        return df_final
-
-    else:
-        pass
-
-
-def min_pit_stop(method:str) -> pd.DataFrame:
-    """Renvoie le temps de pit stop minimal par saison."""
-
-    if method not in ["pandas", "homemade"]:
-        raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
-
-    if method == "pandas":
-    
         df = get_pd_df(["pit_stops", "races"], ["raceId"])
+        df = df[df["milliseconds"] <= 300000]
+        df["secondes"] = round(df["milliseconds"] / 1000, 3)
 
-        df = df.drop(df[df.milliseconds > 300000].index)
-        df["secondes"] = round(df.milliseconds / 1000, 3)
         df_final = (
             df.groupby("year")["secondes"]
             .min()
@@ -90,43 +101,23 @@ def min_pit_stop(method:str) -> pd.DataFrame:
             .reset_index(drop=True)
         )
         return df_final
-    
-    else:
-        # Version homemade :
-        
-        df = get_python_df(["pit_stops", "races"], ["raceId"])
-        
-        # Conversion du dict de colonnes en liste de lignes
-        rows = [dict(zip(df.keys(), vals)) for vals in zip(*df.values())]
 
-        # Filtrer pour supprimer les valeurs aberrantes
-        filtrage = [row for row in rows if int(row["milliseconds"]) <= 300000]
+    # Version homemade (sans pandas)
+    df = get_python_df(["pit_stops", "races"], ["raceId"])
 
-        # Ajouter la colonne secondes
-        for row in filtrage:
-            row["secondes"] = round(int(row["milliseconds"]) / 1000, 3)
-        
-        # GroupBy des saisons (années) et récupération des secondes
-        groupes = {}
-        for row in filtrage:
-            year = row["year"]
-            secs = row["secondes"]
-            groupes.setdefault(year, []).append(secs)
-        
-        # Pour chaque saison on calcule le temps minimal et on prépare la liste de dict
-        result_rows = [
-            {"year": year, "Pit Stop Min": min(secs)}
-            for year, secs in groupes.items()
-        ]
-        # On trie par année croissante
-        result_rows.sort(key=lambda x: x["year"])
-        
-        # On reconstruit le dict final
-        df_final = {
-            "year": [r["year"] for r in result_rows],
-            "Pit Stop Min": [r["Pit Stop Min"] for r in result_rows],
-        }
-        
-        return pd.DataFrame(df_final)
-        
-        
+    # Conversion du dict en liste de lignes
+    rows = [dict(zip(df.keys(), vals)) for vals in zip(*df.values())]
+    valid_rows = [r for r in rows if int(r["milliseconds"]) <= 300000]
+
+    for row in valid_rows:
+        row["secondes"] = round(int(row["milliseconds"]) / 1000, 3)
+
+    groupes = {}
+    for row in valid_rows:
+        year = int(row["year"])
+        groupes.setdefault(year, []).append(row["secondes"])
+
+    result = [{"year": y, "Pit Stop Min": min(secs)} for y, secs in groupes.items()]
+    result.sort(key=lambda r: r["year"])
+
+    return pd.DataFrame(result)

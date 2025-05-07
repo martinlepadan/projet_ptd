@@ -67,7 +67,8 @@ def train_model(df, features, target, hidden_sizes, dropout, lr, epochs, test_si
 
     # Initialisation du modèle
     input_size = train_ds.data.shape[1]
-    output_size = 1 if is_regression else len(np.unique(targets))
+    output_size = 1 if is_regression else max(2, len(np.unique(targets)))
+
     model = CustomNN(input_size, hidden_sizes, dropout, output_size)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss() if is_regression else nn.CrossEntropyLoss()
