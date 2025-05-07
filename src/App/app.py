@@ -14,12 +14,19 @@ st.markdown(
         font-size: 1.2rem;
         }
     </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns([2, 2, 2])
+with col2:
+    st.image("Red-Bull-Logo.png", width=400)
 
 st.markdown(
-    "<h1 style='text-align: center;'>🏁 REDBULL PROJECT 🏁</h1>", unsafe_allow_html=True
+    """
+    <h1 style='text-align: center; font-family: Futura, Trebuchet MS, sans-serif;'>
+        Red Bull Project
+    </h1>
+    """,
+    unsafe_allow_html=True
 )
 
 tabs = st.tabs(["Requêtes", "Régression", "Réseau de Neurones"])
@@ -41,8 +48,8 @@ with tabs[0]:
             "q10": "Dashboard écuries",
         },
         "Pit-Stops": {
-            "q5": "Temps moyen de pit-stop par écurie",
-            "q6": "Temps de pit-stop minimal par saison",
+            "q5": "Temps moyen de pit-stop par écurie par saison (2020-2023)",
+            "q6": "Temps de pit-stop minimal par saison"
         },
     }
 
@@ -52,7 +59,6 @@ with tabs[0]:
         "q1": "🏆",
         "q2": "📊",
         "q3": "⏱️",
-        "q4": "📈",
         "q5": "🔧",
         "q6": "⏱️",
         "q7": "🧑‍💼",
@@ -91,7 +97,7 @@ with tabs[0]:
                 plot_func = get_graph(question_label)
 
                 method = None
-                if question_label in ["q1", "q5", "q8"]:
+                if question_label in ["q1", "q10"]:
                     method = st.selectbox(
                         "⚙️ Méthode",
                         options=["pandas", "homemade"],
@@ -186,7 +192,7 @@ with tabs[0]:
 
                     # Extraire les trois valeurs attendues du DataFrame
                     total_victoires, nb_participations, moyenne_victoires = query_func(
-                        **params
+                        method, **params
                     )
 
                     col1, col2, col3 = st.columns(3)
