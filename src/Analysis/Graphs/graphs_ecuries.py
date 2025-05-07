@@ -5,6 +5,7 @@ import plotly.express as px
 
 # Q8 :
 
+
 def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str) -> px.bar:
     """
     Affiche un graphique empilé représentant le classement des écuries
@@ -23,8 +24,8 @@ def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str) -> px.bar:
         data = pd.DataFrame(data)
 
     data = data.sort_values("points", ascending=True)
-    
-    if methode == 'plotly':
+
+    if methode == "plotly":
         fig = px.bar(
             data,
             x="points",
@@ -42,5 +43,6 @@ def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str) -> px.bar:
         )
 
         return fig
-    
+
+
 # Q9 : Graphe du nombre de victoires par écurie et par saison

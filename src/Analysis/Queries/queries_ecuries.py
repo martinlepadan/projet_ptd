@@ -64,45 +64,36 @@ def victoiresEcuries(method: str, ecurie: str, saison: int) -> pd.DataFrame:
 # Nombre de victoires par écurie en absolue + en relatif + nbr de saisons participées :
 
 
-def victoiresEcuriesRelatif(method: str, ecurie: str) -> pd.DataFrame:
+def victoiresEcuriesRelatif(ecurie: str) -> pd.DataFrame:
 
-    if method not in ["pandas", "homemade"]:
-        raise ValueError("La méthode doit être 'pandas' ou 'homemade'")
+    # On créé le dataframe correspondant au nombre de victoires totale de l'écurie :
 
-    if method == "pandas":
+    df = get_pd_df(
+        ["constructor_standings", "constructors", "races"],
+        ["constructorId", "raceId"],
+    )
 
-        # On créé le dataframe correspondant au nombre de victoires totale de l'écurie :
+    df = df.loc[df["name_x"] == ecurie]
 
-        df = get_pd_df(
-            ["constructor_standings", "constructors", "races"],
-            ["constructorId", "raceId"],
-        )
+    df = df.loc[df["position"] == 1]
 
-        df = df.loc[df["name_x"] == ecurie]
+    nbrWins = df.shape[0]
 
-        df = df.loc[df["position"] == 1]
+    # On créé un second dataframe pour calculer le nombre d'années de participation
+    # de l'écurie (pour pouvoir calculer le relatif ensuite)
 
-        nbrWins = df.shape[0]
+    df2 = get_pd_df(
+        ["constructor_standings", "constructors", "races"],
+        ["constructorId", "raceId"],
+    )
 
-        # On créé un second dataframe pour calculer le nombre d'années de participation
-        # de l'écurie (pour pouvoir calculer le relatif ensuite)
+    df2 = df2.loc[df2["name_x"] == ecurie]
 
-        df2 = get_pd_df(
-            ["constructor_standings", "constructors", "races"],
-            ["constructorId", "raceId"],
-        )
+    nbrParticipation = len(pd.unique(df2["year"]))
 
-        df2 = df2.loc[df2["name_x"] == ecurie]
+    if nbrParticipation == 0:
+        moyenne = "Données manquantes"
+    else:
+        moyenne = round(nbrWins / nbrParticipation, 2)
 
-        nbrParticipation = len(pd.unique(df2["year"]))
-
-        # On effectue le calcul final et on affiche les résultats :
-
-        print(f"\nNombre total de victoires de l'écurie {ecurie} :")
-        print(nbrWins)
-        print(f"\nNombre de saison auxquelles l'écurie {ecurie} a participée :")
-        print(nbrParticipation)
-        print(f"\nNombre moyen de victoires de l'écurie {ecurie} par saison :")
-        print((nbrWins / nbrParticipation))
-        
-        return(nbrWins,nbrParticipation,nbrWins/nbrParticipation)
+    return (nbrWins, nbrParticipation, moyenne)

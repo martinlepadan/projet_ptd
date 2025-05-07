@@ -16,6 +16,7 @@ def get_question(question_id):
         "q9": queries_ecuries.victoiresEcuries,
         "q8": queries_ecuries.ecuriesPoints,
         "q9": queries_ecuries.victoiresEcuries,
+        "q10": queries_ecuries.victoiresEcuriesRelatif,
     }
     return functions.get(question_id)
 
@@ -25,7 +26,7 @@ def get_graph(question_id):
         "q1": graphs_pilotes.plot_nombre_victoires_pilotes,
         "q2": graphs_pilotes.plot_classement_saison,
         "q3": graphs_pilotes.plot_temps_de_carriere_pilotes,
-        # "q5": graphs_pit_stops.plot_temps_pit_stop,
+        "q5": graphs_pit_stops.plot_temps_pit_stop,
         "q7": graphs_pilotes.plot_carriere_pilote,
         "q8": graphs_ecuries.plot_classement_saison_ecuries,
     }
