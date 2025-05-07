@@ -16,13 +16,20 @@ st.markdown(
     </style>
 """, unsafe_allow_html=True)
 
-
-# Affichage de l'image centrée
-st.image("/Users/justinrobert/Desktop/ENSAI/projet info/projet_ptd/Red-Bull-Logo.png", width=650)
+col1, col2, col3 = st.columns([2, 2, 2])
+with col2:
+    st.image("Red-Bull-Logo.png", width=400)
 
 st.markdown(
-    "<h1 style='text-align: center;'>🏁 REDBULL PROJECT 🏁</h1>", unsafe_allow_html=True
+    """
+    <h1 style='text-align: center; font-family: Futura, Trebuchet MS, sans-serif;'>
+        Red Bull Project
+    </h1>
+    """,
+    unsafe_allow_html=True
 )
+
+
 
 tabs = st.tabs(["Requêtes", "Régression", "Réseau de Neurones"])
 
@@ -89,7 +96,7 @@ with tabs[0]:
                 plot_func = get_graph(question_label)
 
                 method = None
-                if question_label in ["q1", "q8", "q5", "q6", "q9"]:
+                if question_label in ["q1", "q10"]:
                     method = st.selectbox(
                         "⚙️ Méthode",
                         options=["pandas", "homemade"],
@@ -184,7 +191,7 @@ with tabs[0]:
 
                     # Extraire les trois valeurs attendues du DataFrame
                     total_victoires, nb_participations, moyenne_victoires = query_func(
-                        **params
+                        method, **params
                     )
 
                     col1, col2, col3 = st.columns(3)
