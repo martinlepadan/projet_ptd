@@ -13,9 +13,7 @@ def get_question(question_id):
         "q5": queries_pit_stops.pit_stop,
         "q7": queries_pilotes.statistiques_pilote,
         "q8": queries_ecuries.ecuriesPoints,
-        "q9": queries_ecuries.victoiresEcuries,
-        "q8": queries_ecuries.ecuriesPoints,
-        "q9": queries_ecuries.victoiresEcuries,
+        "q9": queries_ecuries.victoiresEcuriesRelatif,
         "q10": queries_ecuries.victoiresEcuriesRelatif,
     }
     return functions.get(question_id)

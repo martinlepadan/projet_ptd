@@ -15,6 +15,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
+# Affichage de l'image centrée
+st.image("/Users/justinrobert/Desktop/ENSAI/projet info/projet_ptd/Red-Bull-Logo.png", width=650)
+
 st.markdown(
     "<h1 style='text-align: center;'>🏁 REDBULL PROJECT 🏁</h1>", unsafe_allow_html=True
 )
@@ -184,6 +188,16 @@ with tabs[0]:
                         value=2023,
                         key="slider-q9",
                     )
+                elif question_label == "q10":
+                    ecurie = pd.read_csv("data/constructors.csv")
+                    ecurie_dispo = ecurie["name"].unique().tolist()
+
+                    params["ecurie"] = st.selectbox(
+                        "🏎️ Choisissez une écurie",
+                        options=sorted(ecurie_dispo),
+                        key="select-ecurie",
+                        index=167
+                )
             if question_label == "q10":
                 st.subheader("📊 Dashboard - Statistiques de l'écurie")
 

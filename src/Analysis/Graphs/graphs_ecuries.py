@@ -25,8 +25,6 @@ def plot_classement_saison_ecuries(data: pd.DataFrame, methode: str) -> px.bar:
     data = data.sort_values("points", ascending=True)
 
     if methode == "plotly":
-
-    if methode == "plotly":
         fig = px.bar(
             data,
             x="points",
