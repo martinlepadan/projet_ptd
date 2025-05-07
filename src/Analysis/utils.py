@@ -8,36 +8,36 @@ from functools import reduce
 import csv
 
 
-def get_pd_df(dfs: list, keys: list) -> pd.DataFrame:
+def get_pd_df(dfs: list, keys: list, columns: dict = None) -> pd.DataFrame:
     """
     Combine plusieurs DataFrames à partir de fichiers CSV en un seul DataFrame.
 
-    Cette fonction prend une liste de noms de fichiers CSV (sans extension) et une liste
-    de clés pour effectuer des jointures entre les DataFrames correspondants.
-
     Parameters
     ----------
-        dfs (list): Liste des noms de fichiers CSV (sans extension) à charger et
-            fusionner.
-        keys (list): Liste des colonnes clés utilisées pour effectuer les jointures
-            entre les DataFrames.
-    Return
-    -------
-        pd.DataFrame: Un DataFrame résultant de la fusion des DataFrames chargés.
-    """
+        dfs (list): Liste des noms de fichiers CSV (sans extension) à charger
+                    et fusionner.
+        keys (list): Liste des colonnes clés utilisées pour effectuer les jointures.
+        columns (dict, optional): Dictionnaire {nom_fichier: [colonnes]} pour restreindre
+            les colonnes chargées de chaque fichier.
 
+    Returns
+    -------
+        pd.DataFrame: DataFrame fusionné.
+    """
     if not (isinstance(dfs, list) and isinstance(keys, list)):
         raise TypeError("dfs et keys doivent être des listes")
     if len(dfs) == 0:
         raise ValueError("dfs ne peut pas être vide")
-
     if len(keys) != len(dfs) - 1:
         raise ValueError("Nombre de clés incorrectes")
 
     loaded_dfs = []
     for df_name in dfs:
         df_path = os.path.join("data", df_name + ".csv")
-        loaded_dfs.append(pd.read_csv(df_path))
+        if columns and df_name in columns:
+            loaded_dfs.append(pd.read_csv(df_path, usecols=columns[df_name]))
+        else:
+            loaded_dfs.append(pd.read_csv(df_path))
 
     df_merged = reduce(
         lambda left, right: pd.merge(left, right[1], on=right[0], how="inner"),

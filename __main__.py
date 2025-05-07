@@ -5,13 +5,13 @@ Fichier principal
 import subprocess
 import os
 import sys
+import importlib
+import time
 
-REQUIRED_PACKAGES = ["pandas", "numpy", "sklearn", "streamlit", "plotly"]
+REQUIRED_PACKAGES = ["pandas", "numpy", "sklearn", "streamlit", "plotly", "keyboard"]
 
 
 def check_and_install_packages():
-    import importlib
-    import time
 
     print("🔍 Vérification de la présence des packages requis...\n")
     missing_packages = []
@@ -65,13 +65,70 @@ def check_and_install_packages():
         sys.exit(0)
 
 
-def run_streamlit_app():
-    app_path = os.path.join("src", "App", "app.py")
-    subprocess.run(
-        ["streamlit", "run", app_path], env={**os.environ, "PYTHONPATH": "."}
+def ask_bonus_mode():
+    print("\n✨ Partie BONUS : Réseau de Neurones (PyTorch) ✨")
+    print("Souhaitez-vous activer la partie bonus utilisant le réseau de neurones ?")
+    print(
+        "⚠️  Cette partie nécessite PyTorch et peut prendre du temps à charger et "
+        "ralentir l'application en général. ⚠️"
     )
+    print("\n1️⃣  Oui, activer PyTorch et l'afficher dans l'application")
+    print("2️⃣  Non, ignorer cette partie")
+
+    choix = input("\n👉 Entrez votre choix (1 / 2) : ").strip()
+    if choix == "1":
+        print("\n🔍 Vérification de la présence de torch...\n")
+        try:
+            import torch
+
+            print(f"✅ torch est déjà installé (version {torch.__version__})")
+            if torch.__version__ < "2.6.0":
+                print("⚠️  Version de torch inférieure à 2.6.0")
+                ans = (
+                    input("Souhaitez-vous mettre à jour torch ? (o/n) : ")
+                    .strip()
+                    .lower()
+                )
+                if ans == "o":
+                    print("📥 Mise à jour de torch...")
+                    subprocess.check_call(
+                        [sys.executable, "-m", "pip", "install", "--upgrade", "torch"]
+                    )
+                    print("✅ torch mis à jour.")
+                else:
+                    print("⏭️ Mise à jour de torch ignorée.")
+                    print(
+                        "Risque d'incompatibilité avec le code, "
+                        "partie bonus non déployée."
+                    )
+                return False
+        except ImportError:
+            print("❌ torch n'est pas installé.")
+            ans = input("Souhaitez-vous l'installer ? (o/n) : ").strip().lower()
+            if ans == "o":
+                print("📦 Installation de torch (CPU, version 2.6.0)...")
+                subprocess.check_call(
+                    [sys.executable, "-m", "pip", "install", "torch==2.6.0"]
+                )
+                print("✅ torch installé.")
+            else:
+                print("⏭️ Installation de torch ignorée.")
+                return False
+        return True
+    else:
+        print("⏭️ Partie réseau de neurones ignorée.")
+        return False
+
+
+def run_streamlit_app(bonus_mode):
+    env = os.environ.copy()
+    env["BONUS_MODE"] = "Oui" if bonus_mode else "Non"
+    env["PYTHONPATH"] = "."
+    app_path = os.path.join("src", "App", "app.py")
+    subprocess.run(["streamlit", "run", app_path], env=env)
 
 
 if __name__ == "__main__":
     check_and_install_packages()
-    run_streamlit_app()
+    bonus = ask_bonus_mode()
+    run_streamlit_app(bonus)

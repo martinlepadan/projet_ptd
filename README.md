@@ -45,7 +45,58 @@ python src/__main__.py
 
 ## 📁 Structure du projet
 
-```
+```bash
+projet_traitement/
+├── .flake8
+├── .gitignore
+├── __main__.py
+├── AUTHORS.md
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── .streamlit/
+│   └── config.toml
+├── data/
+│   └── *.csv
+├── src/
+│   ├── __init__.py
+│   ├── Analysis/
+│   │   ├── __init__.py
+│   │   ├── router.py
+│   │   ├── utils.py
+│   │   ├── Graphs/
+│   │   │   ├── __init__.py
+│   │   │   ├── graphs_ecuries.py
+│   │   │   ├── graphs_pilotes.py
+│   │   │   └── graphs_pit_stops.py
+│   │   └── Queries/
+│   │       ├── __init__.py
+│   │       ├── queries_ecuries.py
+│   │       ├── queries_pilotes.py
+│   │       └── queries_pit_stops.py
+│   ├── App/
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   └── assets/
+│   │       └── Red-Bull-Logo.png
+│   └── Models/
+│       ├── __init__.py
+│       ├── Classification/
+│       │   ├── __init__.py
+│       │   ├── classification.py
+│       │   └── graph.py
+│       ├── LogisticRegression/
+│       │   ├── __init__.py
+│       │   ├── graph.py
+│       │   └── logistic_regression.py
+│       └── NeuralNetwork/
+│           ├── __init__.py
+│           ├── graphs.py
+│           ├── neural_network.py
+│           └── train.py
+├── test/
+│   ├── test_ecuries.py
+│   └── test_pilotes.py
 
 ```
 

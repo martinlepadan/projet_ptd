@@ -1,8 +1,6 @@
 import torch
 from torch import nn
 from torch.utils.data import Dataset
-import pandas as pd
-from Analysis.utils import get_pd_df
 
 
 class CustomNN(nn.Module):
@@ -40,58 +38,51 @@ class CustomNN(nn.Module):
 
         self.layers.append(nn.Linear(layers_params[-1], num_classes))
 
-    def _create_hidden_layer(n_in: int, n_out: int, dropout: float) -> nn.Sequential:
+    def _create_hidden_layer(
+        self, n_in: int, n_out: int, dropout: float
+    ) -> nn.Sequential:
         return nn.Sequential(nn.Linear(n_in, n_out), nn.ReLU(), nn.Dropout(dropout))
 
-    def forward(self, x) -> nn.Tensor:
+    def forward(self, x) -> torch.Tensor:
         for layer in self.layers:
             x = layer(x)
         return x
 
 
-def get_data(selected_vars: list[str], target_var: str) -> pd.DataFrame:
-    dfs = ["constructor_standing", "results", "drivers", "driver_standings"]
-    keys = ["raceId", "driverId", "driverId"]
-
-    data = get_pd_df(dfs, keys)
-    features = data[selected_vars]
-    target = data[target_var]
-
-    numerical = features.select_dtypes(include=["number"])
-    categorical = features.select_dtypes(exclude=["number"])
-
-    return numerical, categorical, target
-
-
 class F1Dataset(Dataset):
-    def __init__(self, categorical_data, num_data, targets) -> None:
+    def __init__(self, categorical_data, cat_nclasses, num_data, targets) -> None:
+        if not isinstance(cat_nclasses, list):
+            raise TypeError("cat_nclasses doit être une liste d'entiers")
+
         self.targets = torch.tensor(targets, dtype=torch.float32)
         self.categorical_data = torch.tensor(categorical_data, dtype=torch.long)
+        self.cat_nclasses = cat_nclasses
+        self.num_data = torch.tensor(num_data, dtype=torch.float32)
 
-        n = []
-        one_hot_data = [
-            self._categorical_to_onehot(cat, n)
-            for cat, n in zip(self.categorical_data, n)
+        onehot_cols = [
+            self._categorical_to_onehot(self.categorical_data[:, i], nclass)
+            for i, nclass in enumerate(self.cat_nclasses)
         ]
 
-        self.onehot_data = torch.cat(one_hot_data, dim=1)
+        self.onehot_data = (
+            torch.cat(onehot_cols, dim=1)
+            if onehot_cols
+            else torch.empty((len(targets), 0))
+        )
+        self.data = torch.cat((self.onehot_data, self.num_data), dim=1)
 
-        self.data = torch.cat((self.onehot_data, num_data), dim=1)
-
-    def _categorical_to_onehot(self, data: torch.Tensor, nclass: int) -> torch.Tensor:
-        if not isinstance(data, torch.Tensor):
-            raise TypeError("Les données doivent être un tenseur")
+    def _categorical_to_onehot(self, col: torch.Tensor, nclass: int) -> torch.Tensor:
+        if not isinstance(col, torch.Tensor):
+            raise TypeError("col doit être un tenseur")
         if not isinstance(nclass, int):
             raise TypeError("nclass doit être un entier")
 
-        data_onehot = torch.zeros(data.shape[0], nclass)
-        data_onehot.scatter_(1, data.unsqueeze(1), 1.0)
-        return data_onehot
+        onehot = torch.zeros((len(col), nclass))
+        onehot.scatter_(1, col.unsqueeze(1), 1.0)
+        return onehot
 
-    def __getitem__(self, index) -> tuple[torch.Tensor, torch.Tensor]:
-        x = self.data[index]
-        y = self.targets[index]
-        return x, y
+    def __getitem__(self, index):
+        return self.data[index], self.targets[index]
 
-    def __len__(self) -> int:
-        return len(self.data)
+    def __len__(self):
+        return len(self.targets)

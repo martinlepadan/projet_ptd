@@ -1,11 +1,12 @@
-"""Tests unitaires pour les requêtes."""
+"""
+Tests unitaires pour les requêtes sur les pilotes.
+"""
 
 from src.Analysis.Queries.queries_pilotes import (
     nombre_victoires_pilotes,
     classement_saison,
     temps_de_carriere_pilotes,
 )
-from src.Analysis.Queries.queries_ecuries import ecuriesPoints
 
 
 def test_hamilton_victoires():
@@ -25,16 +26,6 @@ def test_verstappen_victoires():
     df = nombre_victoires_pilotes("pandas", nb_victoires=30)
     row = df[df["nom_pilote"] == "Max Verstappen"]
     assert row["wins"].values[0] >= 54
-
-
-def test_red_bull_points_2023():
-    """
-    Red Bull a remporté environ 800 points en 2023.
-    """
-    df = ecuriesPoints("pandas", saison=2023)
-    top = df.sort_values("points", ascending=False).iloc[0]
-    assert "red_bull" in top["constructorRef"].lower()
-    assert abs(top["points"] - 800) <= 30
 
 
 def test_classement_verstappen_2023():

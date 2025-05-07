@@ -21,13 +21,13 @@ def graph_classification(df_clustered: pd.DataFrame):
         Scatterplot de l'ACP avec les clusters
     """
     fig = px.scatter(
-            df_clustered,
-            x="PC1",
-            y="PC2",
-            color=df_clustered["cluster"].astype(str),
-            color_discrete_sequence=px.colors.qualitative.Plotly,
-            hover_name="nom_pilote",
-            title="Clustering des pilotes (ACP + k-means)",
-            labels={"cluster": "Groupe"},
-        )
+        df_clustered,
+        x="PC1",
+        y="PC2",
+        color=df_clustered["cluster"].astype(str),
+        color_discrete_sequence=px.colors.qualitative.Plotly,
+        hover_name="nom_pilote",
+        title="Clustering des pilotes (ACP + k-means)",
+        labels={"cluster": "Groupe"},
+    )
     return fig

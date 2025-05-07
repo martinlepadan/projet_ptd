@@ -2,21 +2,36 @@
 
 import streamlit as st
 import pandas as pd
+import io
+import os
+import time
+import keyboard
+import psutil
+import numpy as np
+
 from src.Analysis.router import get_question, get_graph
 from src.Models.LogisticRegression.logistic_regression import compare_logistic
 from src.Models.LogisticRegression.graph import plot_confusion_matrix
 from src.Models.Classification.classification import clustering_pilotes
 from src.Models.Classification.graph import graph_classification
-import io
 
+
+bonus_mode = os.getenv("BONUS_MODE", "Non") == "Oui"
 
 st.set_page_config(page_title="Analyse de données F1", layout="wide")
 st.markdown(
     """
     <style>
+    header, .stElementToolbar {
+    visibility: hidden;
+    }
+
+    div[data-testid="stMainBlockContainer"] {
+        padding-top: 3em;
+    }
     div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] p {
         font-size: 1.2rem;
-        }
+    }
     </style>
 """,
     unsafe_allow_html=True,
@@ -35,7 +50,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tabs = st.tabs(["Requêtes", "Régression", "Classification", "Réseau de Neurones"])
+if bonus_mode:
+    tabs = st.tabs(["Requêtes", "Régression", "Classification", "Réseau de Neurones"])
+else:
+    tabs = st.tabs(["Requêtes", "Régression", "Classification"])
+
 
 # ========== ONGLET 1 : REQUÊTES ========== #
 with tabs[0]:
@@ -88,6 +107,7 @@ with tabs[0]:
     for theme, questions in THEMES.items():
         emoji = emojis.get(theme)
         with st.expander(f"{emoji} {theme}", expanded=False):
+            st.markdown("""---""")
             question_label = st.selectbox(
                 "🧩 Questions",
                 options=list(questions.keys()),
@@ -98,8 +118,9 @@ with tabs[0]:
             )
 
             st.success(descriptions.get(question_label, "Sélectionnez une question."))
-
+            st.markdown("""---""")
             if question_label is not None:
+                st.markdown("""### 🔨 Variables""")
                 query_func = get_question(question_label)
                 plot_func = get_graph(question_label)
 
@@ -241,10 +262,17 @@ with tabs[0]:
                     df = st.session_state.get(f"df_{question_label}")
 
                     if df is not None:
-                        st.subheader("📄 Données")
+                        st.markdown(
+                            """
+
+                            ---
+
+                            """
+                        )
+                        st.markdown("### 📄 Données")
                         st.dataframe(df)
 
-                        st.subheader("💾 Exporter les données")
+                        st.markdown("##### 💾 Exporter les données")
                         filename_csv = st.text_input(
                             "Nom du fichier CSV",
                             "resultats.csv",
@@ -258,9 +286,15 @@ with tabs[0]:
                             key=f"csv-{question_label}",
                             icon=":material/download:",
                         )
+                        st.markdown(
+                            """
 
+                            ---
+
+                            """
+                        )
                         if plot_func is not None:
-                            st.subheader("📊 Visualisation")
+                            st.markdown("### 📊 Visualisation")
 
                             methode_graph = st.radio(
                                 "Méthode d'affichage du graphe :",
@@ -283,7 +317,7 @@ with tabs[0]:
                                     fig = figs
                                     st.pyplot(fig)
 
-                                    st.subheader("🖼️ Exporter le graphe")
+                                    st.markdown("##### 🖼️ Exporter le graphe")
                                     filename_png = st.text_input(
                                         "Nom du fichier PNG",
                                         "carriere_pilote.png",
@@ -412,7 +446,7 @@ with tabs[1]:
             """
         )
 
-# ========== ONGLET 4 : ACP + K-MEANS ========== #
+# ========== ONGLET 3 : ACP + K-MEANS ========== #
 with tabs[2]:
     st.header("🧠 Clustering des pilotes selon leur style de carrière")
 
@@ -448,5 +482,269 @@ with tabs[2]:
         st.plotly_chart(fig, use_container_width=True)
 
 # ========== ONGLET 4 : RÉSEAU DE NEURONES ========== #
-with tabs[3]:
-    st.header("🤖 Prédictions par réseau de neurones")
+if bonus_mode:
+    from src.Models.NeuralNetwork.train import train_model
+
+    with tabs[3]:
+        st.header("🤖 Prédictions par réseau de neurones")
+
+        st.markdown("Sélectionnez les paramètres de votre modèle :")
+
+        results = pd.read_csv("data/results.csv")
+        drivers = pd.read_csv("data/drivers.csv")
+        races = pd.read_csv("data/races.csv")
+        constructors = pd.read_csv("data/constructors.csv")
+        driver_standings = pd.read_csv("data/driver_standings.csv")
+        constructor_standings = pd.read_csv("data/constructor_standings.csv")
+
+        races_filtered = races[races["year"] >= 2010]
+        results_filtered = results[results["raceId"].isin(races_filtered["raceId"])]
+
+        top_drivers = results_filtered["driverId"].value_counts().nlargest(100).index
+        results_filtered = results_filtered[
+            results_filtered["driverId"].isin(top_drivers)
+        ]
+
+        df = (
+            results_filtered.merge(drivers, on="driverId", how="left")
+            .merge(
+                races_filtered[["raceId", "year", "circuitId"]], on="raceId", how="left"
+            )
+            .merge(constructors, on="constructorId", how="left")
+            .merge(
+                driver_standings,
+                on=["driverId", "raceId"],
+                how="left",
+                suffixes=("", "_ds"),
+            )
+            .merge(
+                constructor_standings,
+                on=["constructorId", "raceId"],
+                how="left",
+                suffixes=("", "_cs"),
+            )
+        )
+
+        df = df.dropna(axis=1, thresh=len(df) * 0.9)
+        df = df.select_dtypes(include=["number", "object"]).copy()
+
+        selected_columns = [
+            "grid",
+            "positionOrder",
+            "points",
+            "laps",
+            "milliseconds",
+            "fastestLap",
+            "rank",
+            "fastestLapSpeed",
+            "year",
+            "points_ds",
+            "position_ds",
+            "wins",
+            "points_cs",
+            "position_cs",
+            "wins_cs",
+        ]
+
+        df = df[selected_columns].rename(
+            columns={
+                "grid": "Position de départ",
+                "positionOrder": "Position finale",
+                "points": "Points",
+                "laps": "Tours",
+                "milliseconds": "Temps",
+                "fastestLap": "Tour le plus rapide",
+                "rank": "Rang",
+                "fastestLapSpeed": "Vitesse du tour le plus rapide",
+                "year": "Année",
+                "points_ds": "Points pilote saison",
+                "position_ds": "Position pilote saison",
+                "wins": "Victoires du pilote",
+                "points_cs": "Points écurie saison",
+                "position_cs": "Position écurie saison",
+                "wins_cs": "Victoires de l'écurie",
+            }
+        )
+
+        colonnes = df.columns.tolist()
+
+        with st.expander("### 🧮 Paramètres du modèle"):
+
+            target = st.selectbox(
+                "🎯 Variable à prédire",
+                placeholder="Choisissez une variable à prédire ...",
+                options=colonnes,
+                index=None,
+            )
+
+            features = st.pills(
+                "🎯 Variables explicatives",
+                options=[col for col in colonnes if col != target],
+                selection_mode="multi",
+            )
+
+            n_epochs = st.slider(
+                "🔁 Nombre d'epochs",
+                min_value=10,
+                max_value=500,
+                value=100,
+                step=10,
+                help="Nombre d'itérations pour entraîner le modèle.",
+            )
+
+            dropout_rate = st.slider(
+                "💧 Dropout",
+                min_value=0.0,
+                max_value=0.9,
+                step=0.05,
+                value=0.2,
+                help="Taux de neurones à ignorer pour éviter le surapprentissage.",
+            )
+
+            lr = st.number_input(
+                "⚙️ Learning rate",
+                value=0.001,
+                format="%.5f",
+                help="Taux d'apprentissage pour le modèle.",
+                step=0.0005,
+            )
+
+            st.markdown("🧱 Architecture des couches cachées")
+            if "hidden_layers" not in st.session_state:
+                st.session_state.hidden_layers = [64]
+
+            add = st.button(
+                "➕ Ajouter une couche",
+                disabled=len(st.session_state.hidden_layers) >= 4,
+            )
+            remove = st.button(
+                "➖ Supprimer la dernière couche",
+                disabled=len(st.session_state.hidden_layers) <= 1,
+            )
+
+            if add:
+                st.session_state.hidden_layers.append(64)
+            if remove:
+                st.session_state.hidden_layers.pop()
+
+            hidden_sizes = []
+            for i, size in enumerate(st.session_state.hidden_layers):
+                neurons = st.number_input(
+                    f"🧠 Couche cachée {i + 1}",
+                    min_value=1,
+                    max_value=512,
+                    value=size,
+                    step=1,
+                    key=f"layer_{i}",
+                )
+                hidden_sizes.append(neurons)
+
+        st.markdown("#### 🔧 Paramètres de configuration du réseau de neurones")
+        architecture = [{", ".join(str(n) for n in hidden_sizes)}]
+        st.code(
+            f"""
+                📌 Cible : {target}
+                🎯 Variables explicatives : {', '.join(features)}
+                🧱 Architecture : {len(hidden_sizes)} couches — {architecture}
+                💧 Dropout : {dropout_rate}
+                ⚙️ Learning Rate : {lr}
+                🔁 Epochs : {n_epochs}
+                """,
+            language="yaml",
+        )
+
+        if st.button("🚀 Entraîner le réseau de neurones"):
+            with st.spinner("🔁 Entraînement du modèle..."):
+                try:
+                    from src.Models.NeuralNetwork.graphs import (
+                        plot_loss_curves,
+                        plot_accuracy_curves,
+                    )
+
+                    df_clean = df.dropna(subset=features + [target])
+
+                    model, train_losses, train_accuracies, test_metrics = train_model(
+                        df=df_clean,
+                        features=features,
+                        target=target,
+                        hidden_sizes=hidden_sizes,
+                        dropout=dropout_rate,
+                        lr=lr,
+                        epochs=n_epochs,
+                    )
+
+                    st.success("🎉 Entraînement terminé avec succès !")
+
+                    # ✅ Récapitulatif final
+                    st.subheader("📋 Récapitulatif des dernières métriques")
+                    if len(train_losses) > 0:
+                        st.metric(
+                            "📉 Dernière perte (train)", f"{train_losses[-1]:.4f}"
+                        )
+                    if not all(np.isnan(train_accuracies)):
+                        st.metric(
+                            "✅ Dernière accuracy (train)",
+                            f"{train_accuracies[-1]*100:.2f}%",
+                        )
+                    if test_metrics:
+                        last_epoch = max(test_metrics.keys())
+                        st.metric(
+                            "🧪 Perte test (dernier point)",
+                            f"{test_metrics[last_epoch]['loss']:.4f}",
+                        )
+                        st.metric(
+                            "🧪 Accuracy test (dernier point)",
+                            f"{test_metrics[last_epoch]['accuracy']*100:.2f}%",
+                        )
+
+                    # 📈 Affichage des métriques toutes les 10 époques
+                    st.subheader("📊 Évolution des métriques (tous les 10 epochs)")
+                    table_data = []
+                    for epoch in range(0, len(train_losses), 10):
+                        ep = epoch + 1
+                        t_loss = train_losses[epoch]
+                        t_acc = (
+                            train_accuracies[epoch]
+                            if epoch < len(train_accuracies)
+                            else np.nan
+                        )
+                        test = test_metrics.get(ep, {})
+                        table_data.append(
+                            {
+                                "Époch": ep,
+                                "Loss (train)": round(t_loss, 4),
+                                "Accuracy (train)": (
+                                    round(t_acc * 100, 2)
+                                    if not np.isnan(t_acc)
+                                    else "N/A"
+                                ),
+                                "Loss (test)": round(test.get("loss", np.nan), 4),
+                                "Accuracy (test)": (
+                                    round(test.get("accuracy", np.nan) * 100, 2)
+                                    if "accuracy" in test
+                                    else "N/A"
+                                ),
+                            }
+                        )
+
+                    st.dataframe(table_data, use_container_width=True)
+
+                    st.subheader("📈 Courbes de perte (Train & Test)")
+                    fig_loss = plot_loss_curves(train_losses, test_metrics)
+                    st.pyplot(fig_loss)
+
+                    st.subheader("📈 Courbes d'accuracy (Train & Test)")
+                    fig_acc = plot_accuracy_curves(train_accuracies, test_metrics)
+                    st.pyplot(fig_acc)
+
+                except Exception as e:
+                    st.error(f"❌ Une erreur est survenue : {e}")
+
+
+exit_app = st.button("Quitter l'app")
+if exit_app:
+    time.sleep(0.5)
+    keyboard.press_and_release("ctrl+w")
+    pid = os.getpid()
+    p = psutil.Process(pid)
+    p.terminate()
