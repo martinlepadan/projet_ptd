@@ -9,7 +9,15 @@ import importlib
 import time
 
 os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
-REQUIRED_PACKAGES = ["pandas", "numpy", "sklearn", "streamlit", "plotly", "keyboard"]
+REQUIRED_PACKAGES = [
+    "pandas",
+    "numpy",
+    "sklearn",
+    "streamlit",
+    "plotly",
+    "keyboard",
+    "psutil",
+]
 
 
 def check_and_install_packages():

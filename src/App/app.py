@@ -8,6 +8,7 @@ import time
 import keyboard
 import psutil
 import numpy as np
+import matplotlib
 
 from src.Analysis.router import get_question, get_graph
 from src.Models.LogisticRegression.logistic_regression import compare_logistic
@@ -311,19 +312,21 @@ with tabs[0]:
                                     )
 
                                     buffer = io.BytesIO()
-                                    fig.savefig(
-                                        buffer, format="png", bbox_inches="tight"
-                                    )
-                                    buffer.seek(0)
+                                    if isinstance(fig, matplotlib.figure.Figure):
+                                        fig.savefig(
+                                            buffer, format="png", bbox_inches="tight"
+                                        )
 
-                                    st.download_button(
-                                        label="Télécharger le graphique (.png)",
-                                        data=buffer,
-                                        file_name=filename_png,
-                                        mime="image/png",
-                                        key=f"png-{question_label}",
-                                        icon=":material/download:",
-                                    )
+                                        buffer.seek(0)
+
+                                        st.download_button(
+                                            label="Télécharger le graphique (.png)",
+                                            data=buffer,
+                                            file_name=filename_png,
+                                            mime="image/png",
+                                            key=f"png-{question_label}",
+                                            icon=":material/download:",
+                                        )
 
                             else:
                                 fig = plot_func(df, methode=methode_graph)
@@ -342,19 +345,20 @@ with tabs[0]:
                                     )
 
                                     buffer = io.BytesIO()
-                                    fig.savefig(
-                                        buffer, format="png", bbox_inches="tight"
-                                    )
-                                    buffer.seek(0)
+                                    if isinstance(fig, matplotlib.figure.Figure):
+                                        fig.savefig(
+                                            buffer, format="png", bbox_inches="tight"
+                                        )
+                                        buffer.seek(0)
 
-                                    st.download_button(
-                                        label="Télécharger le graphique (.png)",
-                                        data=buffer,
-                                        file_name=filename_png,
-                                        mime="image/png",
-                                        key=f"png-{question_label}",
-                                        icon=":material/download:",
-                                    )
+                                        st.download_button(
+                                            label="Télécharger le graphique (.png)",
+                                            data=buffer,
+                                            file_name=filename_png,
+                                            mime="image/png",
+                                            key=f"png-{question_label}",
+                                            icon=":material/download:",
+                                        )
 
 
 # ONGLET 2 : RÉGRESSION
@@ -476,7 +480,7 @@ if bonus_mode:
         st.markdown(
             """
                     - Ce modèle repose sur un **réseau de neurones PyTorch**.
-                    - Il permet de prédire une variable cible (continue ou binaire)
+                    - Il permet de prédire une variable cible (continue ou catégorielle)
                     à partir de données de course.
                     - L'utilisateur peut personnaliser l'architecture : couches,
                     dropout, learning rate, etc.
@@ -741,17 +745,19 @@ if bonus_mode:
 
                     st.subheader("📈 Courbes de perte (Train & Test)")
                     fig_loss = plot_loss_curves(train_losses, test_metrics)
-                    st.pyplot(fig_loss)
+                    st.plotly_chart(fig_loss)
 
                     if has_accuracy:
                         st.subheader("📈 Courbes d'accuracy (Train & Test)")
                         fig_acc = plot_accuracy_curves(train_accuracies, test_metrics)
-                        st.pyplot(fig_acc)
+                        st.plotly_chart(fig_acc)
                     else:
                         st.info(
                             "ℹ️ Pas de courbe d'accuracy — tâche de régression détectée."
                         )
                 except Exception as e:
+                    st.write("Type de figure :", type(fig_loss))
+                    st.write("Type de figure :", type(fig_acc))
                     st.error(f"❌ Une erreur est survenue : {e}")
 
 
